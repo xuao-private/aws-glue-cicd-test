@@ -5,7 +5,8 @@ from aws_cdk import (
     Environment,
     Stack,
     aws_codecommit as codecommit,
-    aws_iam as iam
+    aws_iam as iam,
+    aws_codebuild as codebuild
 )
 from constructs import Construct
 from aws_cdk.pipelines import CodePipeline, CodePipelineSource, CodeBuildStep, ManualApprovalStep, ShellStep
@@ -44,7 +45,25 @@ class PipelineStack(Stack):
             docker_enabled_for_synth=True,
             synth=CodeBuildStep("CdkSynth_UnitTest",
                 input=source,
+                partial_build_spec=codebuild.BuildSpec.from_object({
+                    "version": "0.2",
+                    "phases": {
+                        "install": {
+                            "runtime-versions": {
+                                "nodejs": 18,
+                                "python": 3.10
+                            }
+                        }
+                    },
+                    "cache": {
+                        "paths": [
+                            "/root/.cache/pip/**/*",
+                            "/root/.npm/**/*"
+                        ]
+                    }
+                }),
                 install_commands=[
+                    "pip install --upgrade pip",
                     "pip install -r requirements-dev.txt",
                     "pip install -r requirements.txt",
                     "npm install -g aws-cdk",
@@ -117,7 +136,19 @@ class PipelineStack(Stack):
         # Integ test
         dev_stage.add_post(CodeBuildStep("IntegrationTest",
                 input=source,
+                partial_build_spec=codebuild.BuildSpec.from_object({
+                    "version": "0.2",
+                    "phases": {
+                        "install": {
+                            "runtime-versions": {
+                                "nodejs": 18,
+                                "python": 3.10
+                            }
+                        }
+                    }
+                }),
                 install_commands=[
+                    "pip install --upgrade pip",
                     "pip install -r requirements-dev.txt"
                 ],
                 commands=[
