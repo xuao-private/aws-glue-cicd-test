@@ -26,6 +26,7 @@ class PipelineStack(Stack):
  
         pipeline = CodePipeline(self, "GluePipeline",
             pipeline_name="GluePipeline",
+            self_mutation=False,
             cross_account_keys=True,
             docker_enabled_for_synth=True,
             synth=CodeBuildStep("CdkSynth",
