@@ -4,7 +4,6 @@ from typing import Dict
 from aws_cdk import (
     Environment,
     Stack,
-    aws_codecommit as codecommit,
     aws_iam as iam,
     aws_codebuild as codebuild
 )
@@ -19,26 +18,12 @@ class PipelineStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, config: Dict, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        archive_file = create_archive()
-
-        codecommit_repo = codecommit.Repository(
-            self, "GitRepo",
-            repository_name="aws-glue-cdk-baseline",
-            code=codecommit.Code.from_zip_file(
-                file_path=archive_file,
-                branch="main"
-            )
+        source = CodePipelineSource.connection(
+            repo_string="xuao-private/aws-glue-cicd-test",
+            branch="main",
+            connection_arn="arn:aws:codeconnections:ap-northeast-1:288378107057:connection/92d6be0e-c606-4b63-a879-edf3f90e0d65"
         )
-
-        i_codecommit_repo = codecommit.Repository.from_repository_name(
-            self, "IGlueRepo",
-            codecommit_repo.repository_name
-        )
-
-        source = CodePipelineSource.code_commit(
-            repository=i_codecommit_repo,
-            branch="main"
-        )
+        
         pipeline = CodePipeline(self, "GluePipeline",
             pipeline_name="GluePipeline",
             cross_account_keys=True,
