@@ -1,14 +1,14 @@
 pipelineAccount:
-  awsAccountId: 123456789101
-  awsRegion: us-east-1
+  awsAccountId: 288378107057
+  awsRegion: ap-northeast-1
 
 devAccount:
-  awsAccountId: 123456789102
-  awsRegion: us-east-1
+  awsAccountId: 288378107057
+  awsRegion: ap-northeast-1
 
 prodAccount:
-  awsAccountId: 123456789103
-  awsRegion: us-east-1
+  awsAccountId: 288378107057
+  awsRegion: ap-northeast-1
 
 dev:
   jobs:
