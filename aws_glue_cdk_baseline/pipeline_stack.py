@@ -36,7 +36,7 @@ class PipelineStack(Stack):
                         "install": {
                             "runtime-versions": {
                                 "nodejs": "18",
-                                "python": "3.10"
+                                "python": "3.9"
                             }
                         }
                     },
@@ -127,7 +127,7 @@ class PipelineStack(Stack):
                         "install": {
                             "runtime-versions": {
                                 "nodejs": "18",
-                                "python": "3.10"
+                                "python": "3.9"
                             }
                         }
                     }
