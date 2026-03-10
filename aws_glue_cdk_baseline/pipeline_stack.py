@@ -2,7 +2,8 @@ from typing import Dict
 import aws_cdk as cdk
 from aws_cdk import (
     Stack,
-    aws_iam as iam
+    aws_iam as iam,
+    aws_codebuild as codebuild
 )
 from constructs import Construct
 from aws_cdk.pipelines import CodePipeline, CodePipelineSource, CodeBuildStep
@@ -36,7 +37,16 @@ class PipelineStack(Stack):
                 ],
                 commands=[
                     "cdk synth",
-                ]
+                ],
+                partial_build_spec=codebuild.BuildSpec.from_object({
+                    "phases": {
+                        "install": {
+                            "runtime-versions": {
+                                "nodejs": "18"
+                            }
+                        }
+                    }
+                })
             )
         )
  
