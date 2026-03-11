@@ -1,7 +1,7 @@
 {
   "jobs": [
     {
-      "Name": "testxuao1",
+      "Name": "deploy-test",
       "JobMode": "VISUAL",
       "JobRunQueuingEnabled": false,
       "Description": "",
@@ -13,7 +13,7 @@
       },
       "Command": {
         "Name": "glueetl",
-        "ScriptLocation": "s3://aws-glue-assets-288378107057-ap-northeast-1/scripts/testxuao1.py",
+        "ScriptLocation": "s3://aws-glue-assets-288378107057-ap-northeast-1/scripts/deploy-test.py",
         "PythonVersion": "3"
       },
       "DefaultArguments": {
@@ -48,7 +48,7 @@
               "node-1772154783764"
             ],
             "PartitionKeys": [],
-            "Path": "s3://xuao-s3-test1/gluetest/",
+            "Path": "{deploy-test.input_path}",
             "Compression": "none",
             "NumberTargetPartitions": "1",
             "Format": "csv",
@@ -109,7 +109,7 @@
           "DirectJDBCSource": {
             "Name": "PostgreSQL",
             "Database": "postgres",
-            "Table": "members",
+            "Table": "{deploy-test.table_name}",
             "ConnectionName": "Jdbc connection",
             "ConnectionType": "postgresql",
             "RedshiftTmpDir": "",
