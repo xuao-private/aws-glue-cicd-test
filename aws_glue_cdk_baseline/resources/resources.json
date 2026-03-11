@@ -67,7 +67,7 @@
             "Inputs": [
               "node-1772154783764"
             ],
-            "Code": "# 取输入 DynamicFrame（根据你的 Source 节点名称改这里）\ndynamic_frame = dfc[\"PostgreSQL_node1772154783764\"]\n\n# 转成 Spark DataFrame\ndf = dynamic_frame.toDF()\n\n# 如果有数据才1111写出\nif df.count() >= 1:\n    (\n        df.coalesce(1)\n          .write\n          .option(\"header\", \"false\")   # 不输出列名\n          .option(\"quote\", '\"')        # 字段用双引号\n          .mode(\"overwrite\")\n          .csv(\"s3://xuao-s3-test1/gluetest/\")\n    )\n\n# 返回 DynamicFrameCollection，供下游节点使用\nreturn DynamicFrameCollection({\"dynamic_frame_out\": DynamicFrame.fromDF(df, glueContext, \"dynamic_frame_out\")}, glueContext)",
+            "Code": "# 取输入 DynamicFrame（根据你1的 Source 节点名称改这里）\ndynamic_frame = dfc[\"PostgreSQL_node1772154783764\"]\n\n# 转成 Spark DataFrame\ndf = dynamic_frame.toDF()\n\n# 如果有数据才1111写出\nif df.count() >= 1:\n    (\n        df.coalesce(1)\n          .write\n          .option(\"header\", \"false\")   # 不输出列名\n          .option(\"quote\", '\"')        # 字段用双引号\n          .mode(\"overwrite\")\n          .csv(\"s3://xuao-s3-test1/gluetest/\")\n    )\n\n# 返回 DynamicFrameCollection，供下游节点使用\nreturn DynamicFrameCollection({\"dynamic_frame_out\": DynamicFrame.fromDF(df, glueContext, \"dynamic_frame_out\")}, glueContext)",
             "ClassName": "MyTransform",
             "OutputSchemas": [
               {
