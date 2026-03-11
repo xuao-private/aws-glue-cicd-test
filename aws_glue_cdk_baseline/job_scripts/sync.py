@@ -326,6 +326,15 @@ def get_job_definition(job_name):
 def synchronize_job(job_name, mapping, job):
     logger.debug(f"Synchronizing job '{job_name}'")
 
+    # 从环境变量获取前缀
+    job_name_prefix = os.environ.get('JOB_NAME_PREFIX', '')
+    if job_name_prefix:
+        new_job_name = f"{job_name_prefix}{job_name}"
+        logger.info(f"Adding prefix '{job_name_prefix}' to job name: {job_name} -> {new_job_name}")
+        job_name = new_job_name
+        if 'Name' in job:
+            job['Name'] = new_job_name
+
     # Skip jobs which do not have DAG
     if args.skip_no_dag_jobs and 'CodeGenConfigurationNodes' not in job:
         logger.debug(f"Skipping job '{job_name}' because the parameter '--skip-no-dag-jobs' is true and this job does not have DAG.")
