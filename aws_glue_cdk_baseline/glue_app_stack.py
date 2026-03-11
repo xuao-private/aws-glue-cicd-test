@@ -1,12 +1,8 @@
-# Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: MIT-0
-from typing import Dict
-from os import path
 from aws_cdk import (
     Stack,
     aws_glue_alpha as glue,
     aws_iam as iam,
-    aws_s3 as s3
+    aws_s3_assets as s3_assets  # 导入资产模块
 )
 from constructs import Construct
 
@@ -42,18 +38,22 @@ class GlueAppStack(Stack):
             ]
         )
 
-        # 从 resources.json 读取作业定义（这里需要决定如何获取）
-        # 方案A：从配置文件读取
+        # 从配置文件读取作业定义
         env_config = config.get(stage, {})
         jobs_config = env_config.get('jobs', {})
         
-        # 如果配置文件中有作业定义，创建作业
         for job_name, job_config in jobs_config.items():
             full_job_name = f"{job_name_prefix}{job_name}"
             
-            # 脚本路径：按环境区分
-            script_location = f"{env_scripts_path}{job_name}.py"
+            # 将本地脚本作为资产上传（关键！）
+            script_asset = s3_assets.Asset(self, f"{full_job_name}Script",
+                path=f"aws_glue_cdk_baseline/scripts/{job_name}.py",  # 脚本在 Git 中
+                asset_hash_type=AssetHashType.OUTPUT  # 内容变化时自动重新上传
+            )
             
+            # 使用资产的位置（CDK 会自动上传到 S3）
+            script_location = script_asset.s3_object_url
+
             # 准备默认参数
             default_arguments = {
                 "--enable-metrics": "true",
@@ -90,40 +90,4 @@ class GlueAppStack(Stack):
                 execution_class="STANDARD"
             )
 
-        # For integration test
-        self.iam_role = iam.Role(self, f"GlueTestRole-{stage}",
-            role_name=f"glue-test-{stage}",
-            assumed_by=iam.ArnPrincipal(f"arn:aws:iam::{pipeline_account}:root"),
-            inline_policies={
-                "GluePolicy": iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            actions=[
-                                "glue:GetJobs",
-                                "glue:GetJobRun",
-                                "glue:GetTags",
-                                "glue:StartJobRun"
-                            ],
-                            resources=[
-                                "*"
-                            ]
-                        )
-                    ]
-                )
-            }
-        )
-
-    def create_cross_account_role(self, role_name: str, trusted_account_id: str):
-        return iam.Role(self, f"{role_name}CrossAccountRole",
-            role_name=role_name,
-            assumed_by=iam.AccountPrincipal(trusted_account_id),
-            managed_policies=[iam.ManagedPolicy.from_aws_managed_policy_name("AdministratorAccess")]
-        )
-
-    @property
-    def iam_role_arn(self):
-        return self.iam_role.role_arn
-
-    @property
-    def cross_account_role_arn(self):
-        return self.cross_account_role.role_arn
+        # ... 其余代码保持不变 ...

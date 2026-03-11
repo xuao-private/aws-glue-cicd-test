@@ -51,33 +51,106 @@ class PipelineStack(Stack):
             )
         )
  
-        # Add development stage
-        dev_stage = GlueAppStage(self, "DevStage", config=config, stage="dev", 
+        # ========== 开发环境 ==========
+        dev_stage = GlueAppStage(self, "DevStage", 
+            config=config, 
+            stage="dev", 
             env=cdk.Environment(
                 account=str(config['devAccount']['awsAccountId']),
                 region=config['devAccount']['awsRegion']
             ))
         pipeline.add_stage(dev_stage)
 
-        # Add stg stage
-        stg_stage = GlueAppStage(self, "StgStage", config=config, stage="stg", 
-            env=cdk.Environment(
-                account=str(config['stgAccount']['awsAccountId']),
-                region=config['stgAccount']['awsRegion']
-            ))
-        pipeline.add_stage(stg_stage)
+        # ========== 预发布环境（新增） ==========
+        # 检查配置中是否有 stg 环境
+        if 'stg' in config and 'stgAccount' in config:
+            stg_stage = GlueAppStage(self, "StgStage", 
+                config=config, 
+                stage="stg", 
+                env=cdk.Environment(
+                    account=str(config['stgAccount']['awsAccountId']),
+                    region=config['stgAccount']['awsRegion']
+                ))
+            pipeline.add_stage(stg_stage)
 
-        # Add production stage
-        prod_stage = GlueAppStage(self, "ProdStage", config=config, stage="prod", 
+        # ========== 生产环境 ==========
+        prod_stage = GlueAppStage(self, "ProdStage", 
+            config=config, 
+            stage="prod", 
             env=cdk.Environment(
                 account=str(config['prodAccount']['awsAccountId']),
                 region=config['prodAccount']['awsRegion']
             ))
         pipeline.add_stage(prod_stage)
  
-        # Glue Resource Sync as a separate step in the pipeline
-        pipeline.add_wave("GlueJobSync").add_post(CodeBuildStep("GlueJobSync",
+        # ========== Glue 作业参数同步（每个环境独立） ==========
+        # 注意：现在 sync.py 只同步参数，不创建作业
+        
+        # 开发环境的参数同步
+        dev_sync = CodeBuildStep("DevGlueJobSync",
             input=source,
+            env={
+                "STAGE": "dev"
+            },
+            commands=[
+                "python $(pwd)/aws_glue_cdk_baseline/job_scripts/generate_mapping.py",
+                "python aws_glue_cdk_baseline/job_scripts/sync.py "
+                   "--dst-role-arn arn:aws:iam::{0}:role/GlueCrossAccountRole-dev "
+                   "--dst-region {1} "
+                   "--deserialize-from-file aws_glue_cdk_baseline/resources/resources.json "
+                   "--config-path mapping.json "
+                   "--targets job "
+                   "--skip-prompt".format(
+                       config['devAccount']['awsAccountId'],
+                       config['devAccount']['awsRegion']
+                   ),
+            ],
+            role_policy_statements=[
+                iam.PolicyStatement(
+                    actions=["sts:AssumeRole"],
+                    resources=["*"]
+                )
+            ]
+        )
+        
+        # 添加到 DevStage 之后
+        dev_stage.add_post(dev_sync)
+
+        # 预发布环境的参数同步
+        if 'stg' in config and 'stgAccount' in config:
+            stg_sync = CodeBuildStep("StgGlueJobSync",
+                input=source,
+                env={
+                    "STAGE": "stg"
+                },
+                commands=[
+                    "python $(pwd)/aws_glue_cdk_baseline/job_scripts/generate_mapping.py",
+                    "python aws_glue_cdk_baseline/job_scripts/sync.py "
+                       "--dst-role-arn arn:aws:iam::{0}:role/GlueCrossAccountRole-stg "
+                       "--dst-region {1} "
+                       "--deserialize-from-file aws_glue_cdk_baseline/resources/resources.json "
+                       "--config-path mapping.json "
+                       "--targets job "
+                       "--skip-prompt".format(
+                           config['stgAccount']['awsAccountId'],
+                           config['stgAccount']['awsRegion']
+                       ),
+                ],
+                role_policy_statements=[
+                    iam.PolicyStatement(
+                        actions=["sts:AssumeRole"],
+                        resources=["*"]
+                    )
+                ]
+            )
+            stg_stage.add_post(stg_sync)
+
+        # 生产环境的参数同步
+        prod_sync = CodeBuildStep("ProdGlueJobSync",
+            input=source,
+            env={
+                "STAGE": "prod"
+            },
             commands=[
                 "python $(pwd)/aws_glue_cdk_baseline/job_scripts/generate_mapping.py",
                 "python aws_glue_cdk_baseline/job_scripts/sync.py "
@@ -85,7 +158,7 @@ class PipelineStack(Stack):
                    "--dst-region {1} "
                    "--deserialize-from-file aws_glue_cdk_baseline/resources/resources.json "
                    "--config-path mapping.json "
-                   "--targets job,catalog "
+                   "--targets job "
                    "--skip-prompt".format(
                        config['prodAccount']['awsAccountId'],
                        config['prodAccount']['awsRegion']
@@ -93,10 +166,9 @@ class PipelineStack(Stack):
             ],
             role_policy_statements=[
                 iam.PolicyStatement(
-                    actions=[
-                        "sts:AssumeRole",
-                    ],
+                    actions=["sts:AssumeRole"],
                     resources=["*"]
                 )
             ]
-        ))
+        )
+        prod_stage.add_post(prod_sync)

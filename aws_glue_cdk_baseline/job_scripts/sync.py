@@ -61,8 +61,9 @@ parser.add_argument('--overwrite-tables', dest='overwrite_tables', type=strtoboo
                     help='Overwrite Glue tables when the tables already exist. (possible values: [true, false]. default: true)')
 parser.add_argument('--overwrite-connections', dest='overwrite_connections', type=strtobool, default=True,
                     help='Overwrite Glue connections when the connections already exist. (possible values: [true, false]. default: true)')
-parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool, default=True,
-                    help='Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: true)')
+# 修改默认值为 False，禁用脚本复制
+parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool, default=False,
+                    help='Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: false)')
 parser.add_argument('--config-path', dest='config_path', type=str,
                     help='The config file path to provide parameter mapping. You can set S3 path or local file path.')
 parser.add_argument('--serialize-to-file', dest='serialize_file', type=str,
@@ -331,52 +332,47 @@ def synchronize_job(job_name, mapping, job):
         logger.debug(f"Skipping job '{job_name}' because the parameter '--skip-no-dag-jobs' is true and this job does not have DAG.")
         return
 
-    # Store source job script path
+    # Store source job script path (for logging only)
     src_job_script_s3_url = job['Command']['ScriptLocation']
 
     # Organize job parameters
     job = organize_job_param(job, mapping)
 
-    # Store destination job script path
+    # Store destination job script path (for logging only)
     dst_job_script_s3_url = job['Command']['ScriptLocation']
 
-    # Copy job script
+    # 修改：不再复制脚本，只记录日志
     if args.copy_job_script:
-        logger.debug(f"Copying job script for job '{job_name}' because the parameter 'copy-job-script' is true.")
-        try:
-            if args.deserialize_file:
-                logger.debug(f"Skipping copying job script for job '{job_name}' because the parameter 'deserialize-from-file' is true.")
-            else:
-                if do_update:
-                    copy_job_script(src_job_script_s3_url, dst_job_script_s3_url)
-        except Exception as e:
-            logger.error(f"Error occurred in copying job script: '{job_name}'")
-            if args.skip_errors:
-                logger.error(f"Skipping error: {e}", exc_info=True)
-            else:
-                raise
+        logger.info(f"⚠️ Script copy is disabled - scripts are managed by CDK")
+        logger.debug(f"Source script would be: {src_job_script_s3_url}")
+        logger.debug(f"Destination script would be: {dst_job_script_s3_url}")
 
-    # Copy job configuration
+    # Copy job configuration (只更新作业参数，不创建作业)
     try:
         logger.debug(f"Checking if job '{job_name}' exists in the destination account.")
         current_job = dst_glue.get_job(JobName=job_name)
-        logger.debug(f"Current job '{job_name}' configuration: {current_job}")
+        logger.debug(f"Current job '{job_name}' configuration found.")
+        
         if args.overwrite_jobs:
-            del job['Name']
+            # 只更新作业参数，不修改 Name
+            if 'Name' in job:
+                del job['Name']
+            
             job_update = {}
             job_update['JobName'] = job_name
             job_update['JobUpdate'] = job
-            logger.debug(f"Updating job '{job_name}' with configuration: '{json.dumps(job_update, indent=4, default=str)}'")
+            
+            logger.debug(f"Updating job '{job_name}' parameters with configuration")
             if do_update:
                 dst_glue.update_job(**job_update)
-            logger.info(f"The job '{job_name}' has been overwritten.")
+            logger.info(f"✅ Job '{job_name}' parameters have been updated.")
+            
     except dst_glue.exceptions.EntityNotFoundException:
-        logger.debug(f"Creating job '{job_name}' with configuration: '{json.dumps(job, indent=4, default=str)}'")
-        if do_update:
-            dst_glue.create_job(**job)
-        logger.info(f"New job '{job_name}' has been created.")
+        logger.warning(f"⚠️ Job '{job_name}' does not exist in destination account. Please ensure CDK has created the job first.")
+        logger.debug(f"Job definition would be: {json.dumps(job, indent=4, default=str)}")
+        
     except Exception as e:
-        logger.error(f"Error occurred in copying job: '{job_name}'")
+        logger.error(f"Error occurred in updating job parameters: '{job_name}'")
         if args.skip_errors:
             logger.error(f"Skipping error: {e}", exc_info=True)
         else:
