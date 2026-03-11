@@ -81,12 +81,13 @@ class PipelineStack(Stack):
             commands=[
                 "python $(pwd)/aws_glue_cdk_baseline/job_scripts/generate_mapping.py",
                 "python aws_glue_cdk_baseline/job_scripts/sync.py "
-                   "--dst-profile dev-account "
-                   "--dst-region {0} "
+                   "--dst-role-arn arn:aws:iam::{0}:role/GlueCrossAccountRole-dev "  # 改为角色扮演
+                   "--dst-region {1} "
                    "--deserialize-from-file aws_glue_cdk_baseline/resources/resources.json "
                    "--config-path mapping.json "
                    "--targets job "
                    "--skip-prompt".format(
+                       config['devAccount']['awsAccountId'],
                        config['devAccount']['awsRegion']
                    ),
             ],
