@@ -4,7 +4,8 @@ from aws_cdk import (
     aws_glue_alpha as glue,
     aws_iam as iam,
     aws_s3_assets as s3_assets,
-    AssetHashType
+    AssetHashType,
+    Duration
 )
 from constructs import Construct
 
@@ -74,22 +75,21 @@ class GlueAppStack(Stack):
             if 'inputLocation' in job_config:
                 default_arguments["--input_path"] = job_config['inputLocation']
 
-            # 创建 Glue 作业
-            glue.CfnJob(self, f"{full_job_name}Job",
-                name=full_job_name,
-                role=glue_service_role.role_arn,
-                command={
-                    "name": "glueetl",
-                    "scriptLocation": script_location,
-                    "pythonVersion": "3"
-                },
+            # 创建 Glue 作业（使用 L2 构造）
+            glue.Job(self, f"{full_job_name}Job",
+                job_name=full_job_name,
+                role=glue_service_role,
+                script=glue.Code.from_asset(script_asset.path),  # 从 asset 引用脚本
+                executable=glue.JobExecutable.python_etl(
+                    glue_version=glue.GlueVersion.V5_0,
+                    python_version=glue.PythonVersion.THREE,
+                    script=glue.Code.from_asset(script_asset.path)
+                ),
                 default_arguments=default_arguments,
                 max_retries=0,
-                timeout=480,
-                worker_type="G.1X",
-                number_of_workers=2,
-                glue_version="5.0",
-                execution_class="STANDARD"
+                timeout=Duration.minutes(480),
+                worker_count=2,
+                worker_type=glue.WorkerType.G_1X
             )
 
         # 创建测试角色（用于集成测试）
@@ -114,7 +114,6 @@ class GlueAppStack(Stack):
         )
 
     def create_cross_account_role(self, role_name: str, trusted_account_id: str):
-        """创建跨账号角色，允许管道账号部署"""
         return iam.Role(self, f"{role_name}CrossAccountRole",
             role_name=role_name,
             assumed_by=iam.AccountPrincipal(trusted_account_id),
