@@ -6,23 +6,94 @@ from aws_cdk import (
     Stack,
     aws_glue_alpha as glue,
     aws_iam as iam,
+    aws_s3 as s3
 )
 from constructs import Construct
 
 class GlueAppStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, config:Dict, stage:str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, config:Dict, stage:str, job_name_prefix:str = "", **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+
+        # 获取当前环境配置
+        current_account = config[f"{stage}Account"]['awsAccountId']
+        pipeline_account = config['pipelineAccount']['awsAccountId']
+        
+        # 基础路径
+        base_assets_path = f"s3://aws-glue-assets-{current_account}-{self.region}"
+        
+        # 按环境区分的路径
+        env_scripts_path = f"{base_assets_path}/{stage}/scripts/"
+        env_spark_logs_path = f"{base_assets_path}/{stage}/sparkHistoryLogs/"
+        env_temp_path = f"{base_assets_path}/{stage}/temporary/"
 
         # Create cross-account role
         self.cross_account_role = self.create_cross_account_role(
             f"GlueCrossAccountRole-{stage}",
-            str(config['pipelineAccount']['awsAccountId'])
+            str(pipeline_account)
         )
 
+        # 创建 Glue 服务角色
+        glue_service_role = iam.Role(self, f"GlueServiceRole-{stage}",
+            role_name=f"AWSGlueServiceRole-{stage}",
+            assumed_by=iam.ServicePrincipal("glue.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess")
+            ]
+        )
+
+        # 从 resources.json 读取作业定义（这里需要决定如何获取）
+        # 方案A：从配置文件读取
+        env_config = config.get(stage, {})
+        jobs_config = env_config.get('jobs', {})
+        
+        # 如果配置文件中有作业定义，创建作业
+        for job_name, job_config in jobs_config.items():
+            full_job_name = f"{job_name_prefix}{job_name}"
+            
+            # 脚本路径：按环境区分
+            script_location = f"{env_scripts_path}{job_name}.py"
+            
+            # 准备默认参数
+            default_arguments = {
+                "--enable-metrics": "true",
+                "--enable-spark-ui": "true",
+                "--spark-event-logs-path": env_spark_logs_path,
+                "--enable-job-insights": "true",
+                "--enable-observability-metrics": "true",
+                "--conf": "spark.eventLog.rolling.enabled=true",
+                "--enable-glue-datacatalog": "true",
+                "--job-bookmark-option": "job-bookmark-disable",
+                "--job-language": "python",
+                "--TempDir": env_temp_path
+            }
+            
+            # 如果配置中有 inputLocation，添加到参数中
+            if 'inputLocation' in job_config:
+                default_arguments["--input_path"] = job_config['inputLocation']
+
+            # 创建 Glue 作业
+            glue.CfnJob(self, f"{full_job_name}Job",
+                name=full_job_name,
+                role=glue_service_role.role_arn,
+                command={
+                    "name": "glueetl",
+                    "scriptLocation": script_location,
+                    "pythonVersion": "3"
+                },
+                default_arguments=default_arguments,
+                max_retries=0,
+                timeout=480,
+                worker_type="G.1X",
+                number_of_workers=2,
+                glue_version="5.0",
+                execution_class="STANDARD"
+            )
+
         # For integration test
-        self.iam_role = iam.Role(self, "GlueTestRole",
+        self.iam_role = iam.Role(self, f"GlueTestRole-{stage}",
             role_name=f"glue-test-{stage}",
-            assumed_by=iam.ArnPrincipal(f"arn:aws:iam::{str(config['pipelineAccount']['awsAccountId'])}:root"),
+            assumed_by=iam.ArnPrincipal(f"arn:aws:iam::{pipeline_account}:root"),
             inline_policies={
                 "GluePolicy": iam.PolicyDocument(
                     statements=[

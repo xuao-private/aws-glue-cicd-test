@@ -59,6 +59,14 @@ class PipelineStack(Stack):
             ))
         pipeline.add_stage(dev_stage)
 
+        # Add stg stage
+        stg_stage = GlueAppStage(self, "StgStage", config=config, stage="stg", 
+            env=cdk.Environment(
+                account=str(config['stgAccount']['awsAccountId']),
+                region=config['stgAccount']['awsRegion']
+            ))
+        pipeline.add_stage(stg_stage)
+
         # Add production stage
         prod_stage = GlueAppStage(self, "ProdStage", config=config, stage="prod", 
             env=cdk.Environment(

@@ -6,6 +6,10 @@ devAccount:
   awsAccountId: 288378107057
   awsRegion: ap-northeast-1
 
+stgAccount:
+  awsAccountId: 288378107057
+  awsRegion: ap-northeast-1
+
 prodAccount:
   awsAccountId: 288378107057
   awsRegion: ap-northeast-1
@@ -13,9 +17,14 @@ prodAccount:
 dev:
   jobs:
     ProcessLegislators:
-      inputLocation: s3://awsglue-datasets/examples/us-legislators/all/persons.json
+      inputLocation: s3://awsglue-datasets/dev/persons.json
+
+stg:
+  jobs:
+    ProcessLegislators:
+      inputLocation: s3://awsglue-datasets/stg/persons.json
 
 prod:
   jobs:
     ProcessLegislators:
-      inputLocation: s3://awsglue-datasets/examples/us-legislators/all/persons.json
+      inputLocation: s3://awsglue-datasets/prod/persons.json

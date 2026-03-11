@@ -9,7 +9,15 @@ class GlueAppStage(cdk.Stage):
     def __init__(self, scope: Construct, construct_id: str, config:Dict, stage:str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        self.glue_app_stack = GlueAppStack(self, "GlueAppStack", config, stage)
+        job_name_prefix = f"{stage}-"  # dev-, stg-, prod-
+        
+        self.glue_app_stack = GlueAppStack(
+            self, 
+            "GlueAppStack", 
+            config, 
+            stage,
+            job_name_prefix=job_name_prefix
+        )
 
     @property
     def iam_role_arn(self):
