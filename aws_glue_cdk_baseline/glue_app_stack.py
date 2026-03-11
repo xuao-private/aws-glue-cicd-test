@@ -48,15 +48,6 @@ class GlueAppStack(Stack):
         for job_name, job_config in jobs_config.items():
             full_job_name = f"{job_name_prefix}{job_name}"
             
-            # 将本地脚本作为资产上传
-            script_asset = s3_assets.Asset(self, f"{full_job_name}Script",
-                path=f"aws_glue_cdk_baseline/scripts/{job_name}.py",
-                asset_hash_type=AssetHashType.SOURCE
-            )
-            
-            # 使用资产的位置
-            script_location = script_asset.s3_object_url
-
             # 准备默认参数
             default_arguments = {
                 "--enable-metrics": "true",
@@ -75,15 +66,14 @@ class GlueAppStack(Stack):
             if 'inputLocation' in job_config:
                 default_arguments["--input_path"] = job_config['inputLocation']
 
-            # 创建 Glue 作业（使用 L2 构造）
+            # 创建 Glue 作业 - 使用本地脚本路径
             glue.Job(self, f"{full_job_name}Job",
                 job_name=full_job_name,
                 role=glue_service_role,
-                script=glue.Code.from_asset(script_asset.path),  # 从 asset 引用脚本
                 executable=glue.JobExecutable.python_etl(
                     glue_version=glue.GlueVersion.V5_0,
                     python_version=glue.PythonVersion.THREE,
-                    script=glue.Code.from_asset(script_asset.path)
+                    script=glue.Code.from_asset(f"aws_glue_cdk_baseline/scripts/{job_name}.py")  # 直接使用本地路径
                 ),
                 default_arguments=default_arguments,
                 max_retries=0,
