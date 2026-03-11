@@ -8,14 +8,14 @@ devAccount:
 
 prodAccount:
   awsAccountId: 288378107057
-  awsRegion: ap-northeast-1
+  awsRegion: us-east-1
 
 dev:
   jobs:
-    ProcessLegislators:
+    testxuao1:
       inputLocation: s3://awsglue-datasets/examples/us-legislators/all/persons.json
 
 prod:
   jobs:
-    ProcessLegislators:
+    testxuao1:
       inputLocation: s3://awsglue-datasets/examples/us-legislators/all/persons.json
