@@ -50,7 +50,7 @@ class GlueAppStack(Stack):
             # 将本地脚本作为资产上传
             script_asset = s3_assets.Asset(self, f"{full_job_name}Script",
                 path=f"aws_glue_cdk_baseline/scripts/{job_name}.py",
-                asset_hash_type=AssetHashType.OUTPUT
+                asset_hash_type=AssetHashType.SOURCE
             )
             
             # 使用资产的位置
