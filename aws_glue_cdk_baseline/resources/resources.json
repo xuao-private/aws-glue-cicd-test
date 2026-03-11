@@ -1,0 +1,156 @@
+{
+  "jobs": [
+    {
+      "Name": "testxuao1",
+      "JobMode": "VISUAL",
+      "JobRunQueuingEnabled": false,
+      "Description": "",
+      "Role": "arn:aws:iam::288378107057:role/service-role/AmazonSageMakerAdminIAMExecutionRole",
+      "CreatedOn": "2026-02-27 10:35:49.750000+08:00",
+      "LastModifiedOn": "2026-02-27 17:16:00.967000+08:00",
+      "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+      },
+      "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://aws-glue-assets-288378107057-ap-northeast-1/scripts/testxuao1.py",
+        "PythonVersion": "3"
+      },
+      "DefaultArguments": {
+        "--enable-metrics": "true",
+        "--enable-spark-ui": "true",
+        "--spark-event-logs-path": "s3://aws-glue-assets-288378107057-ap-northeast-1/sparkHistoryLogs/",
+        "--enable-job-insights": "true",
+        "--enable-observability-metrics": "true",
+        "--conf": "spark.eventLog.rolling.enabled=true",
+        "--enable-glue-datacatalog": "true",
+        "--job-bookmark-option": "job-bookmark-disable",
+        "--job-language": "python",
+        "--TempDir": "s3://aws-glue-assets-288378107057-ap-northeast-1/temporary/"
+      },
+      "Connections": {
+        "Connections": [
+          "Jdbc connection"
+        ]
+      },
+      "MaxRetries": 0,
+      "AllocatedCapacity": 2,
+      "Timeout": 480,
+      "MaxCapacity": 2,
+      "WorkerType": "G.1X",
+      "NumberOfWorkers": 2,
+      "GlueVersion": "5.0",
+      "CodeGenConfigurationNodes": {
+        "node-1772159602962": {
+          "S3DirectTarget": {
+            "Name": "Amazon S3",
+            "Inputs": [
+              "node-1772154783764"
+            ],
+            "PartitionKeys": [],
+            "Path": "s3://xuao-s3-test1/gluetest/",
+            "Compression": "none",
+            "NumberTargetPartitions": "1",
+            "Format": "csv",
+            "SchemaChangePolicy": {
+              "EnableUpdateCatalog": false
+            },
+            "AutoDataQuality": {
+              "IsEnabled": false,
+              "EvaluationContext": "EvaluateDataQuality_node1772181778172"
+            }
+          }
+        },
+        "node-1772183129684": {
+          "CustomCode": {
+            "Name": "Custom Transform",
+            "Inputs": [
+              "node-1772154783764"
+            ],
+            "Code": "# 取输入 DynamicFrame（根据你的 Source 节点名称改这里）\ndynamic_frame = dfc[\"PostgreSQL_node1772154783764\"]\n\n# 转成 Spark DataFrame\ndf = dynamic_frame.toDF()\n\n# 如果有数据才写出\nif df.count() >= 1:\n    (\n        df.coalesce(1)\n          .write\n          .option(\"header\", \"false\")   # 不输出列名\n          .option(\"quote\", '\"')        # 字段用双引号\n          .mode(\"overwrite\")\n          .csv(\"s3://xuao-s3-test1/gluetest/\")\n    )\n\n# 返回 DynamicFrameCollection，供下游节点使用\nreturn DynamicFrameCollection({\"dynamic_frame_out\": DynamicFrame.fromDF(df, glueContext, \"dynamic_frame_out\")}, glueContext)",
+            "ClassName": "MyTransform",
+            "OutputSchemas": [
+              {
+                "Columns": [
+                  {
+                    "Name": "member_id",
+                    "Type": "int"
+                  },
+                  {
+                    "Name": "first_name",
+                    "Type": "string"
+                  },
+                  {
+                    "Name": "last_name",
+                    "Type": "string"
+                  },
+                  {
+                    "Name": "email",
+                    "Type": "string"
+                  },
+                  {
+                    "Name": "date_of_birth",
+                    "Type": "date"
+                  },
+                  {
+                    "Name": "created_at",
+                    "Type": "timestamp"
+                  },
+                  {
+                    "Name": "updated_at",
+                    "Type": "timestamp"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "node-1772154783764": {
+          "DirectJDBCSource": {
+            "Name": "PostgreSQL",
+            "Database": "postgres",
+            "Table": "members",
+            "ConnectionName": "Jdbc connection",
+            "ConnectionType": "postgresql",
+            "RedshiftTmpDir": "",
+            "OutputSchemas": [
+              {
+                "Columns": [
+                  {
+                    "Name": "member_id",
+                    "Type": "int"
+                  },
+                  {
+                    "Name": "first_name",
+                    "Type": "string"
+                  },
+                  {
+                    "Name": "last_name",
+                    "Type": "string"
+                  },
+                  {
+                    "Name": "email",
+                    "Type": "string"
+                  },
+                  {
+                    "Name": "date_of_birth",
+                    "Type": "date"
+                  },
+                  {
+                    "Name": "created_at",
+                    "Type": "timestamp"
+                  },
+                  {
+                    "Name": "updated_at",
+                    "Type": "timestamp"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "ExecutionClass": "STANDARD"
+    }
+  ]
+}
