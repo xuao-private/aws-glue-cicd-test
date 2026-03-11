@@ -3,7 +3,7 @@ from aws_cdk import (
     Stack,
     aws_glue_alpha as glue,
     aws_iam as iam,
-    aws_s3_assets as s3_assets,  # 导入资产模块
+    aws_s3_assets as s3_assets,
     AssetHashType
 )
 from constructs import Construct
@@ -47,13 +47,13 @@ class GlueAppStack(Stack):
         for job_name, job_config in jobs_config.items():
             full_job_name = f"{job_name_prefix}{job_name}"
             
-            # 将本地脚本作为资产上传（关键！）
+            # 将本地脚本作为资产上传
             script_asset = s3_assets.Asset(self, f"{full_job_name}Script",
-                path=f"aws_glue_cdk_baseline/scripts/{job_name}.py",  # 脚本在 Git 中
-                asset_hash_type=AssetHashType.OUTPUT  # 内容变化时自动重新上传
+                path=f"aws_glue_cdk_baseline/scripts/{job_name}.py",
+                asset_hash_type=AssetHashType.OUTPUT
             )
             
-            # 使用资产的位置（CDK 会自动上传到 S3）
+            # 使用资产的位置
             script_location = script_asset.s3_object_url
 
             # 准备默认参数
@@ -92,4 +92,41 @@ class GlueAppStack(Stack):
                 execution_class="STANDARD"
             )
 
-        # ... 其余代码保持不变 ...
+        # 创建测试角色（用于集成测试）
+        self.iam_role = iam.Role(self, f"GlueTestRole-{stage}",
+            role_name=f"glue-test-{stage}",
+            assumed_by=iam.ArnPrincipal(f"arn:aws:iam::{pipeline_account}:root"),
+            inline_policies={
+                "GluePolicy": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            actions=[
+                                "glue:GetJobs",
+                                "glue:GetJobRun",
+                                "glue:GetTags",
+                                "glue:StartJobRun"
+                            ],
+                            resources=["*"]
+                        )
+                    ]
+                )
+            }
+        )
+
+    def create_cross_account_role(self, role_name: str, trusted_account_id: str):
+        """创建跨账号角色，允许管道账号部署"""
+        return iam.Role(self, f"{role_name}CrossAccountRole",
+            role_name=role_name,
+            assumed_by=iam.AccountPrincipal(trusted_account_id),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("AdministratorAccess")
+            ]
+        )
+
+    @property
+    def iam_role_arn(self):
+        return self.iam_role.role_arn
+
+    @property
+    def cross_account_role_arn(self):
+        return self.cross_account_role.role_arn
