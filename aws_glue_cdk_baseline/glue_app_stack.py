@@ -64,12 +64,12 @@ class GlueAppStack(Stack):
             if 'inputLocation' in job_config:
                 default_arguments["--input_path"] = job_config['inputLocation']
 
-            # 创建 Glue 作业 - 使用 Glue 4.0 版本（更稳定）
+            # 创建 Glue 作业
             glue.Job(self, f"{full_job_name}Job",
                 job_name=full_job_name,
                 role=glue_service_role,
                 executable=glue.JobExecutable.python_etl(
-                    glue_version=glue.GlueVersion.V4_0,  # 改为 V4_0
+                    glue_version=glue.GlueVersion.V4_0,  # 使用稳定的 4.0 版本
                     python_version=glue.PythonVersion.THREE,
                     script=glue.Code.from_asset(f"aws_glue_cdk_baseline/scripts/{job_name}.py")
                 ),
@@ -77,7 +77,7 @@ class GlueAppStack(Stack):
                 max_retries=0,
                 timeout=Duration.minutes(480),
                 worker_count=2,
-                worker_type=glue.WorkerType.G_1X
+                worker_type=glue.WorkerType.G_1_X  # 改为 G_1_X（注意下划线）
             )
 
         # 创建测试角色（用于集成测试）
