@@ -1,8 +1,10 @@
+from typing import Dict
 from aws_cdk import (
     Stack,
     aws_glue_alpha as glue,
     aws_iam as iam,
-    aws_s3_assets as s3_assets  # 导入资产模块
+    aws_s3_assets as s3_assets,  # 导入资产模块
+    AssetHashType
 )
 from constructs import Construct
 
