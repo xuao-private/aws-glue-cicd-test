@@ -59,7 +59,8 @@ class PipelineStack(Stack):
                 account=str(config['devAccount']['awsAccountId']),
                 region=config['devAccount']['awsRegion']
             ))
-        pipeline.add_stage(dev_stage)
+        # 保存 pipeline 添加 stage 后返回的对象
+        dev_stage_in_pipeline = pipeline.add_stage(dev_stage)
 
         # ========== 预发布环境（新增） ==========
         # 检查配置中是否有 stg 环境
@@ -71,7 +72,8 @@ class PipelineStack(Stack):
                     account=str(config['stgAccount']['awsAccountId']),
                     region=config['stgAccount']['awsRegion']
                 ))
-            pipeline.add_stage(stg_stage)
+            # 保存 pipeline 添加 stage 后返回的对象
+            stg_stage_in_pipeline = pipeline.add_stage(stg_stage)
 
         # ========== 生产环境 ==========
         prod_stage = GlueAppStage(self, "ProdStage", 
@@ -81,7 +83,8 @@ class PipelineStack(Stack):
                 account=str(config['prodAccount']['awsAccountId']),
                 region=config['prodAccount']['awsRegion']
             ))
-        pipeline.add_stage(prod_stage)
+        # 保存 pipeline 添加 stage 后返回的对象
+        prod_stage_in_pipeline = pipeline.add_stage(prod_stage)
  
         # ========== Glue 作业参数同步（每个环境独立） ==========
         # 注意：现在 sync.py 只同步参数，不创建作业
@@ -113,8 +116,8 @@ class PipelineStack(Stack):
             ]
         )
         
-        # 添加到 DevStage 之后
-        dev_stage.add_post(dev_sync)
+        # 添加到 DevStage 之后 - 使用 pipeline 返回的对象
+        dev_stage_in_pipeline.add_post(dev_sync)
 
         # 预发布环境的参数同步
         if 'stg' in config and 'stgAccount' in config:
@@ -143,7 +146,8 @@ class PipelineStack(Stack):
                     )
                 ]
             )
-            stg_stage.add_post(stg_sync)
+            # 添加到 StgStage 之后 - 使用 pipeline 返回的对象
+            stg_stage_in_pipeline.add_post(stg_sync)
 
         # 生产环境的参数同步
         prod_sync = CodeBuildStep("ProdGlueJobSync",
@@ -171,4 +175,5 @@ class PipelineStack(Stack):
                 )
             ]
         )
-        prod_stage.add_post(prod_sync)
+        # 添加到 ProdStage 之后 - 使用 pipeline 返回的对象
+        prod_stage_in_pipeline.add_post(prod_sync)
