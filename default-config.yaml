@@ -16,15 +16,15 @@ prodAccount:
 
 dev:
   jobs:
-    ProcessLegislators:
+    testxuao1:
       inputLocation: s3://awsglue-datasets/dev/persons.json
 
 stg:
   jobs:
-    ProcessLegislators:
+    testxuao1:
       inputLocation: s3://awsglue-datasets/stg/persons.json
 
 prod:
   jobs:
-    ProcessLegislators:
+    testxuao1:
       inputLocation: s3://awsglue-datasets/prod/persons.json

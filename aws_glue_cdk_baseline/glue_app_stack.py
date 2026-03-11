@@ -44,53 +44,53 @@ class GlueAppStack(Stack):
         env_config = config.get(stage, {})
         jobs_config = env_config.get('jobs', {})
         
-        for job_name, job_config in jobs_config.items():
-            full_job_name = f"{job_name_prefix}{job_name}"
+        # for job_name, job_config in jobs_config.items():
+        #     full_job_name = f"{job_name_prefix}{job_name}"
             
-            # 将本地脚本作为资产上传
-            script_asset = s3_assets.Asset(self, f"{full_job_name}Script",
-                path=f"aws_glue_cdk_baseline/scripts/{job_name}.py",
-                asset_hash_type=AssetHashType.OUTPUT
-            )
+        #     # 将本地脚本作为资产上传
+        #     script_asset = s3_assets.Asset(self, f"{full_job_name}Script",
+        #         path=f"aws_glue_cdk_baseline/scripts/{job_name}.py",
+        #         asset_hash_type=AssetHashType.OUTPUT
+        #     )
             
-            # 使用资产的位置
-            script_location = script_asset.s3_object_url
+        #     # 使用资产的位置
+        #     script_location = script_asset.s3_object_url
 
-            # 准备默认参数
-            default_arguments = {
-                "--enable-metrics": "true",
-                "--enable-spark-ui": "true",
-                "--spark-event-logs-path": env_spark_logs_path,
-                "--enable-job-insights": "true",
-                "--enable-observability-metrics": "true",
-                "--conf": "spark.eventLog.rolling.enabled=true",
-                "--enable-glue-datacatalog": "true",
-                "--job-bookmark-option": "job-bookmark-disable",
-                "--job-language": "python",
-                "--TempDir": env_temp_path
-            }
+        #     # 准备默认参数
+        #     default_arguments = {
+        #         "--enable-metrics": "true",
+        #         "--enable-spark-ui": "true",
+        #         "--spark-event-logs-path": env_spark_logs_path,
+        #         "--enable-job-insights": "true",
+        #         "--enable-observability-metrics": "true",
+        #         "--conf": "spark.eventLog.rolling.enabled=true",
+        #         "--enable-glue-datacatalog": "true",
+        #         "--job-bookmark-option": "job-bookmark-disable",
+        #         "--job-language": "python",
+        #         "--TempDir": env_temp_path
+        #     }
             
-            # 如果配置中有 inputLocation，添加到参数中
-            if 'inputLocation' in job_config:
-                default_arguments["--input_path"] = job_config['inputLocation']
+        #     # 如果配置中有 inputLocation，添加到参数中
+        #     if 'inputLocation' in job_config:
+        #         default_arguments["--input_path"] = job_config['inputLocation']
 
-            # 创建 Glue 作业
-            glue.CfnJob(self, f"{full_job_name}Job",
-                name=full_job_name,
-                role=glue_service_role.role_arn,
-                command={
-                    "name": "glueetl",
-                    "scriptLocation": script_location,
-                    "pythonVersion": "3"
-                },
-                default_arguments=default_arguments,
-                max_retries=0,
-                timeout=480,
-                worker_type="G.1X",
-                number_of_workers=2,
-                glue_version="5.0",
-                execution_class="STANDARD"
-            )
+        #     # 创建 Glue 作业
+        #     glue.CfnJob(self, f"{full_job_name}Job",
+        #         name=full_job_name,
+        #         role=glue_service_role.role_arn,
+        #         command={
+        #             "name": "glueetl",
+        #             "scriptLocation": script_location,
+        #             "pythonVersion": "3"
+        #         },
+        #         default_arguments=default_arguments,
+        #         max_retries=0,
+        #         timeout=480,
+        #         worker_type="G.1X",
+        #         number_of_workers=2,
+        #         glue_version="5.0",
+        #         execution_class="STANDARD"
+        #     )
 
         # 创建测试角色（用于集成测试）
         self.iam_role = iam.Role(self, f"GlueTestRole-{stage}",
