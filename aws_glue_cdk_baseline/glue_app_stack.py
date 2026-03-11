@@ -3,8 +3,6 @@ from aws_cdk import (
     Stack,
     aws_glue_alpha as glue,
     aws_iam as iam,
-    aws_s3_assets as s3_assets,
-    AssetHashType,
     Duration
 )
 from constructs import Construct
@@ -66,14 +64,14 @@ class GlueAppStack(Stack):
             if 'inputLocation' in job_config:
                 default_arguments["--input_path"] = job_config['inputLocation']
 
-            # 创建 Glue 作业 - 使用本地脚本路径
+            # 创建 Glue 作业 - 使用 Glue 4.0 版本（更稳定）
             glue.Job(self, f"{full_job_name}Job",
                 job_name=full_job_name,
                 role=glue_service_role,
                 executable=glue.JobExecutable.python_etl(
-                    glue_version=glue.GlueVersion.V5_0,
+                    glue_version=glue.GlueVersion.V4_0,  # 改为 V4_0
                     python_version=glue.PythonVersion.THREE,
-                    script=glue.Code.from_asset(f"aws_glue_cdk_baseline/scripts/{job_name}.py")  # 直接使用本地路径
+                    script=glue.Code.from_asset(f"aws_glue_cdk_baseline/scripts/{job_name}.py")
                 ),
                 default_arguments=default_arguments,
                 max_retries=0,
