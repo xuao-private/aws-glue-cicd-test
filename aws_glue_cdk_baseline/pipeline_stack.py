@@ -106,6 +106,15 @@ class PipelineStack(Stack):
                     resources=[
                         f"arn:aws:iam::{config['pipelineAccount']['awsAccountId']}:role/service-role/*"
                     ]
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        "s3:GetObject",
+                        "s3:PutObject",
+                        "s3:ListBucket",
+                        "s3:GetBucketLocation"
+                    ],
+                    resources=["*"]
                 )
             ]
         )
