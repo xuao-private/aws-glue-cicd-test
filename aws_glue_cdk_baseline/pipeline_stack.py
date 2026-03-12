@@ -31,7 +31,7 @@ class PipelineStack(Stack):
         )
  
         pipeline = CodePipeline(self, "GluePipeline",
-            pipeline_name=f"GluePipeline-{env_type}",  # 環境ごとに pipeline を区別
+            pipeline_name=f"glue-pipeline-test-bydl-{env_type}",  # 環境ごとに pipeline を区別
             self_mutation=False,
             cross_account_keys=False,  # 同一アカウントでのデプロイのためクロスアカウント不要
             docker_enabled_for_synth=True,
@@ -43,7 +43,7 @@ class PipelineStack(Stack):
                     "npm install -g aws-cdk",
                 ],
                 commands=[
-                    "cdk synth",
+                    "cdk synth -c envType={0}".format(env_type),
                 ],
                 partial_build_spec=codebuild.BuildSpec.from_object({
                     "phases": {
