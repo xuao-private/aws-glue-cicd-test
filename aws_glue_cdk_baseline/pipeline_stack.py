@@ -7,7 +7,6 @@ from aws_cdk import (
 )
 from constructs import Construct
 from aws_cdk.pipelines import CodePipeline, CodePipelineSource, CodeBuildStep
-from aws_glue_cdk_baseline.glue_app_stage import GlueAppStage
 
 class PipelineStack(Stack):
  
@@ -31,9 +30,9 @@ class PipelineStack(Stack):
         )
  
         pipeline = CodePipeline(self, "GluePipeline",
-            pipeline_name=f"{env_type}-glue-pipeline-test-bydl",  # 環境ごとに pipeline を区別
+            pipeline_name=f"{env_type}-glue-pipeline-test-bydl",
             self_mutation=False,
-            cross_account_keys=False,  # 同一アカウントでのデプロイのためクロスアカウント不要
+            cross_account_keys=False,
             docker_enabled_for_synth=True,
             synth=CodeBuildStep("CdkSynth",
                 input=source,
@@ -56,36 +55,24 @@ class PipelineStack(Stack):
                 })
             )
         )
- 
-        #  現在の環境の stage のみをデプロイ
-        stage = GlueAppStage(self, f"{env_type}-stage", 
-            config=config, 
-            stage=env_type, 
-            env=cdk.Environment(
-                account=str(config['pipelineAccount']['awsAccountId']),
-                region=config['pipelineAccount']['awsRegion']
-            ))
-        stage_in_pipeline = pipeline.add_stage(stage)
         
-        #  現在の環境のジョブ同期
+        # ジョブ同期ステップ（直接 pipeline に追加）
         sync_step = CodeBuildStep(f"{env_type.capitalize()}GlueJobSync",
             input=source,
             env={
-                "JOB_NAME_PREFIX": f"{env_type}-",  # プレフィックスを渡す
+                "JOB_NAME_PREFIX": f"{env_type}-",
                 "TARGET_ENV": env_type
             },
             commands=[
                 "python $(pwd)/aws_glue_cdk_baseline/job_scripts/generate_mapping.py",
-                "python aws_glue_cdk_baseline/job_scripts/sync.py "
-                   "--dst-region {0} "
+                "python $(pwd)/aws_glue_cdk_baseline/job_scripts/sync.py "
+                   f"--dst-region {config['pipelineAccount']['awsRegion']} "
                    "--deserialize-from-file aws_glue_cdk_baseline/resources/resources.json "
                    "--config-path mapping.json "
                    "--targets job "
-                   "--skip-prompt".format(
-                       config['pipelineAccount']['awsRegion']
-                   ),
+                   "--skip-prompt"
             ],
-            role_policy_statements=[  # Glue API 権限を追加
+            role_policy_statements=[
                 iam.PolicyStatement(
                     actions=[
                         "glue:GetJob",
@@ -118,4 +105,6 @@ class PipelineStack(Stack):
                 )
             ]
         )
-        stage_in_pipeline.add_post(sync_step)
+        
+        # Wave を追加して同期ステップを実行
+        pipeline.add_wave("GlueJobSync").add_post(sync_step)
