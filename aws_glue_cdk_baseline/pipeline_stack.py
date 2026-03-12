@@ -84,7 +84,21 @@ class PipelineStack(Stack):
                    "--skip-prompt".format(
                        config['pipelineAccount']['awsRegion']
                    ),
+            ],
+            role_policy_statements=[  # Glue API 権限を追加
+                iam.PolicyStatement(
+                    actions=[
+                        "glue:GetJob",
+                        "glue:GetJobs",
+                        "glue:CreateJob",
+                        "glue:UpdateJob",
+                        "glue:DeleteJob",
+                        "glue:StartJobRun",
+                        "glue:GetJobRun",
+                        "glue:GetJobRuns"
+                    ],
+                    resources=["*"]
+                )
             ]
-            # 注意：role_policy_statements は削除済み（クロスアカウント不要のため）
         )
         stage_in_pipeline.add_post(sync_step)
