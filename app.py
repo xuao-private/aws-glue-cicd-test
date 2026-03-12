@@ -24,7 +24,7 @@ with open(config_file, 'r', encoding="utf-8") as f:
 # PipelineStack を作成
 PipelineStack(
     app, 
-    f"PipelineStack-{env_type}",  # 環境ごとにスタック名を区別
+    f"{env_type}-pipeline-stack-glue-test-bydl",  # 環境ごとにスタック名を区別
     config=config,
     env_type=env_type,
     env=cdk.Environment(

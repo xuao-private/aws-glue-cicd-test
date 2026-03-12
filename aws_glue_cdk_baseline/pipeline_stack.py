@@ -31,7 +31,7 @@ class PipelineStack(Stack):
         )
  
         pipeline = CodePipeline(self, "GluePipeline",
-            pipeline_name=f"glue-pipeline-test-bydl-{env_type}",  # 環境ごとに pipeline を区別
+            pipeline_name=f"{env_type}-glue-pipeline-test-bydl",  # 環境ごとに pipeline を区別
             self_mutation=False,
             cross_account_keys=False,  # 同一アカウントでのデプロイのためクロスアカウント不要
             docker_enabled_for_synth=True,
@@ -58,7 +58,7 @@ class PipelineStack(Stack):
         )
  
         #  現在の環境の stage のみをデプロイ
-        stage = GlueAppStage(self, f"{env_type.capitalize()}Stage", 
+        stage = GlueAppStage(self, f"{env_type}-stage", 
             config=config, 
             stage=env_type, 
             env=cdk.Environment(

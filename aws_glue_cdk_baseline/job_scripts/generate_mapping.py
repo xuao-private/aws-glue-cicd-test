@@ -3,19 +3,19 @@ import json
 import os
 
 def generate_mapping():
-    with open('default-config.yaml', 'r') as config_file:
-        config = yaml.safe_load(config_file)
-    
     # 環境変数からターゲット環境を取得
     target_env = os.environ.get('TARGET_ENV', 'prod')
     
-    # 現在の環境の設定を取得
-    env_config = config[target_env]
+    # 対象環境の設定ファイルを読み込み
+    config_file = f"./config/{target_env}.yaml"
+    
+    with open(config_file, 'r') as f:
+        config = yaml.safe_load(f)
     
     mapping = {}
     
     # すべての設定項目をループ
-    for key, value in env_config.items():
+    for key, value in config.items():
         if isinstance(value, str):
             mapping[f"{{{key}}}"] = value
             print(f"Env mapping: {{{key}}} → {value}")
