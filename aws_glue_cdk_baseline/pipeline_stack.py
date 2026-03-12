@@ -98,6 +98,14 @@ class PipelineStack(Stack):
                         "glue:GetJobRuns"
                     ],
                     resources=["*"]
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        "iam:PassRole"
+                    ],
+                    resources=[
+                        f"arn:aws:iam::{config['pipelineAccount']['awsAccountId']}:role/service-role/*"
+                    ]
                 )
             ]
         )
