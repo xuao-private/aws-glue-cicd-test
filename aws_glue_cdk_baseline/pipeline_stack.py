@@ -8,15 +8,21 @@ from aws_cdk import (
 from constructs import Construct
 from aws_cdk.pipelines import CodePipeline, CodePipelineSource, CodeBuildStep
 from aws_glue_cdk_baseline.glue_app_stage import GlueAppStage
- 
-GITHUB_REPO = "xuao-private/aws-glue-cicd-test"
-GITHUB_BRANCH = "main"
-GITHUB_CONNECTION_ARN = "arn:aws:codeconnections:ap-northeast-1:288378107057:connection/92d6be0e-c606-4b63-a879-edf3f90e0d65"
 
 class PipelineStack(Stack):
  
-    def __init__(self, scope: Construct, construct_id: str, config: Dict, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, config: Dict, env_type: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        
+        print(f"{env_type} 環境の Pipeline をデプロイ")
+        
+        # config から GitHub 設定を取得
+        GITHUB_REPO = config['github']['repo']
+        GITHUB_BRANCH = config['github']['branch']
+        GITHUB_CONNECTION_ARN = config['github']['connection_arn']
+        
+        print(f"GitHub リポジトリ: {GITHUB_REPO}")
+        print(f"監視ブランチ: {GITHUB_BRANCH}")
  
         source = CodePipelineSource.connection(
             GITHUB_REPO,
@@ -25,9 +31,9 @@ class PipelineStack(Stack):
         )
  
         pipeline = CodePipeline(self, "GluePipeline",
-            pipeline_name="GluePipeline",
+            pipeline_name=f"GluePipeline-{env_type}",  # 環境ごとに pipeline を区別
             self_mutation=False,
-            cross_account_keys=True,
+            cross_account_keys=False,  # 同一アカウントでのデプロイのためクロスアカウント不要
             docker_enabled_for_synth=True,
             synth=CodeBuildStep("CdkSynth",
                 input=source,
@@ -51,80 +57,34 @@ class PipelineStack(Stack):
             )
         )
  
-        # ========== 开发环境 ==========
-        dev_stage = GlueAppStage(self, "DevStage", 
+        #  現在の環境の stage のみをデプロイ
+        stage = GlueAppStage(self, f"{env_type.capitalize()}Stage", 
             config=config, 
-            stage="dev", 
+            stage=env_type, 
             env=cdk.Environment(
-                account=str(config['devAccount']['awsAccountId']),
-                region=config['devAccount']['awsRegion']
+                account=str(config['pipelineAccount']['awsAccountId']),
+                region=config['pipelineAccount']['awsRegion']
             ))
-        dev_stage_in_pipeline = pipeline.add_stage(dev_stage)
-
-        # ========== 生产环境 ==========
-        prod_stage = GlueAppStage(self, "ProdStage", 
-            config=config, 
-            stage="prod", 
-            env=cdk.Environment(
-                account=str(config['prodAccount']['awsAccountId']),
-                region=config['prodAccount']['awsRegion']
-            ))
-        prod_stage_in_pipeline = pipeline.add_stage(prod_stage)
- 
-        # ========== 开发环境作业同步 ==========
-        dev_sync = CodeBuildStep("DevGlueJobSync",
+        stage_in_pipeline = pipeline.add_stage(stage)
+        
+        #  現在の環境のジョブ同期
+        sync_step = CodeBuildStep(f"{env_type.capitalize()}GlueJobSync",
             input=source,
             env={
-                "JOB_NAME_PREFIX": "dev-",  # 传递前缀
-                "TARGET_ENV": "dev"
+                "JOB_NAME_PREFIX": f"{env_type}-",  # プレフィックスを渡す
+                "TARGET_ENV": env_type
             },
             commands=[
                 "python $(pwd)/aws_glue_cdk_baseline/job_scripts/generate_mapping.py",
                 "python aws_glue_cdk_baseline/job_scripts/sync.py "
-                   "--dst-role-arn arn:aws:iam::{0}:role/GlueCrossAccountRole-dev "  # 改为角色扮演
-                   "--dst-region {1} "
+                   "--dst-region {0} "
                    "--deserialize-from-file aws_glue_cdk_baseline/resources/resources.json "
                    "--config-path mapping.json "
                    "--targets job "
                    "--skip-prompt".format(
-                       config['devAccount']['awsAccountId'],
-                       config['devAccount']['awsRegion']
+                       config['pipelineAccount']['awsRegion']
                    ),
-            ],
-            role_policy_statements=[
-                iam.PolicyStatement(
-                    actions=["sts:AssumeRole"],
-                    resources=["*"]
-                )
             ]
+            # 注意：role_policy_statements は削除済み（クロスアカウント不要のため）
         )
-        dev_stage_in_pipeline.add_post(dev_sync)
-
-        # ========== 生产环境作业同步 ==========
-        prod_sync = CodeBuildStep("ProdGlueJobSync",
-            input=source,
-            env={
-                "JOB_NAME_PREFIX": "prod-",  # 传递前缀
-                "TARGET_ENV": "prod"
-            },
-            commands=[
-                "python $(pwd)/aws_glue_cdk_baseline/job_scripts/generate_mapping.py",
-                "python aws_glue_cdk_baseline/job_scripts/sync.py "
-                   "--dst-role-arn arn:aws:iam::{0}:role/GlueCrossAccountRole-prod "
-                   "--dst-region {1} "
-                   "--deserialize-from-file aws_glue_cdk_baseline/resources/resources.json "
-                   "--config-path mapping.json "
-                   "--targets job "
-                   "--skip-prompt".format(
-                       config['prodAccount']['awsAccountId'],
-                       config['prodAccount']['awsRegion']
-                   ),
-            ],
-            role_policy_statements=[
-                iam.PolicyStatement(
-                    actions=["sts:AssumeRole"],
-                    resources=["*"]
-                )
-            ]
-        )
-        prod_stage_in_pipeline.add_post(prod_sync)
+        stage_in_pipeline.add_post(sync_step)

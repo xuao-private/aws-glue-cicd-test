@@ -1,0 +1,16 @@
+pipelineAccount:
+  awsAccountId: "288378107057"
+  awsRegion: "ap-northeast-1"
+
+assets_path: "s3://aws-glue-assets-288378107057-ap-northeast-1"
+
+github:
+  repo: "xuao-private/aws-glue-cicd-test"
+  branch: "main"
+  connection_arn: "arn:aws:codeconnections:ap-northeast-1:288378107057:connection/92d6be0e-c606-4b63-a879-edf3f90e0d65"
+
+jobs:
+  deploy-test:
+    input_path: "s3://xuao-s3-test2/prod/"
+    table_name: "member_prod"
+    glue_role: "arn:aws:iam::288378107057:role/service-role/AmazonSageMakerAdminIAMExecutionRole"

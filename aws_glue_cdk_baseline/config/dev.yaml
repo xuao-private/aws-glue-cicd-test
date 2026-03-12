@@ -1,0 +1,20 @@
+# 开发环境配置
+pipelineAccount:
+  awsAccountId: "961341542235"
+  awsRegion: "ap-northeast-1"
+
+# 环境变量
+assets_path: "s3://aws-glue-assets-961341542235-ap-northeast-1"
+
+# GitHub 配置
+github:
+  repo: "xuao-private/aws-glue-cicd-test"
+  branch: "develop"
+  connection_arn: "arn:aws:codeconnections:ap-northeast-1:961341542235:connection/78aa1400-8f4b-4aa4-8e0f-4b94b703bc1b"
+
+# 作业配置
+jobs:
+  deploy-test:
+    input_path: "s3://xuao-s3-test2/dev/"
+    table_name: "member_dev"
+    glue_role: "arn:aws:iam::961341542235:role/service-role/AWSGlueServiceRole-dev"
