@@ -104,8 +104,7 @@ if args.deserialize_file is None:
 # Only require destination credentials when not serializing
 if args.serialize_file is None:
     if args.dst_profile is None and args.dst_role_arn is None and args.sts_role_arn is None:
-        logger.error("You need to set --dst-profile, --dst-role-arn, or --sts-role-arn to access the destination account.")
-        sys.exit(1)
+        logger.info("No destination credentials provided, using default credentials")
 
 src_session_args = {}
 if args.src_profile is not None:
@@ -326,7 +325,7 @@ def get_job_definition(job_name):
 def synchronize_job(job_name, mapping, job):
     logger.debug(f"Synchronizing job '{job_name}'")
 
-    # 从环境变量获取前缀
+    # 環境変数からプレフィックスを取得
     job_name_prefix = os.environ.get('JOB_NAME_PREFIX', '')
     if job_name_prefix:
         new_job_name = f"{job_name_prefix}{job_name}"
@@ -334,11 +333,10 @@ def synchronize_job(job_name, mapping, job):
         job_name = new_job_name
         if 'Name' in job:
             job['Name'] = new_job_name
-        # 同时修改脚本路径！
+        # スクリプトパスも同時に変更
         if 'Command' in job and 'ScriptLocation' in job['Command']:
             old_script = job['Command']['ScriptLocation']
-            # 在路径中插入环境前缀
-            # s3://.../scripts/testxuao1.py → s3://.../scripts/dev/testxuao1.py
+            # パス内に環境プレフィックスを挿入
             new_script = old_script.replace('/scripts/', f'/scripts/{job_name_prefix}')
             job['Command']['ScriptLocation'] = new_script
             logger.info(f"Script location updated: {old_script} -> {new_script}")
