@@ -38,7 +38,6 @@ class PipelineStack(Stack):
                 input=source,
                 install_commands=[
                     "pip install -r requirements.txt",
-                    "pip install -r requirements-dev.txt",
                     "npm install -g aws-cdk",
                 ],
                 commands=[
