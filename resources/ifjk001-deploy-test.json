@@ -108,7 +108,7 @@
         "Name": "PostgreSQL",
         "Database": "postgres",
         "Table": "{ifjk001-deploy-test.table_name}",
-        "ConnectionName": "Jdbc connection",
+        "ConnectionName": "{ifjk001-deploy-test.jdbc_connection}",
         "ConnectionType": "postgresql",
         "RedshiftTmpDir": "",
         "OutputSchemas": [
