@@ -3,7 +3,7 @@
   "JobMode": "VISUAL",
   "JobRunQueuingEnabled": false,
   "Description": "",
-  "Role": "arn:aws:iam::288378107057:role/service-role/AmazonSageMakerAdminIAMExecutionRole_1",
+  "Role": "{ifjk002-deploy-test2.glue_role}",
   "CreatedOn": "2026-03-02 16:30:56.418000+08:00",
   "LastModifiedOn": "2026-03-12 18:04:52.572000+08:00",
   "ExecutionProperty": {
