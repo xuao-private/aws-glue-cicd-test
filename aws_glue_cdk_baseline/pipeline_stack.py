@@ -90,7 +90,7 @@ class PipelineStack(Stack):
                         "iam:PassRole"
                     ],
                     resources=[
-                        f"arn:aws:iam::{config['pipelineAccount']['awsAccountId']}:role/service-role/*"
+                        f"arn:aws:iam::{config['pipelineAccount']['awsAccountId']}:role/*"
                     ]
                 ),
                 iam.PolicyStatement(
