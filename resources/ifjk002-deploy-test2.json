@@ -3,7 +3,7 @@
   "JobMode": "VISUAL",
   "JobRunQueuingEnabled": false,
   "Description": "",
-  "Role": "{ifjk002-deploy-test2.glue_role}",
+  "Role": "{ifjk002.glue_role}",
   "CreatedOn": "2026-03-02 16:30:56.418000+08:00",
   "LastModifiedOn": "2026-03-12 18:04:52.572000+08:00",
   "ExecutionProperty": {
@@ -22,7 +22,7 @@
     "--enable-observability-metrics": "true",
     "--conf": "spark.eventLog.rolling.enabled=true",
     "--enable-glue-datacatalog": "true",
-    "--input_path": "{ifjk002-deploy-test2.check_path}",
+    "--input_path": "{ifjk002.check_path}",
     "--job-bookmark-option": "job-bookmark-disable",
     "--job-language": "python",
     "--TempDir": "{assets_path}/temporary/"
@@ -39,13 +39,13 @@
       "S3CsvSource": {
         "Name": "froms3",
         "Paths": [
-          "{ifjk002-deploy-test2.input_path}"
+          "{ifjk002.input_path}"
         ],
         "Exclusions": [],
         "Recurse": true,
         "AdditionalOptions": {
           "EnableSamplePath": false,
-          "SamplePath": "{ifjk002-deploy-test2.input_path}"
+          "SamplePath": "{ifjk002.input_path}"
         },
         "Separator": "comma",
         "Escaper": "",

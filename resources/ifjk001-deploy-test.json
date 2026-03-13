@@ -3,7 +3,7 @@
   "JobMode": "VISUAL",
   "JobRunQueuingEnabled": false,
   "Description": "",
-  "Role": "{ifjk001-deploy-test.glue_role}",
+  "Role": "{ifjk001.glue_role}",
   "CreatedOn": "2026-02-27 10:35:49.750000+08:00",
   "LastModifiedOn": "2026-02-27 17:16:00.967000+08:00",
   "ExecutionProperty": {
@@ -28,7 +28,7 @@
   },
   "Connections": {
     "Connections": [
-      "{ifjk001-deploy-test.jdbc_connection}"
+      "{ifjk001.jdbc_connection}"
     ]
   },
   "MaxRetries": 0,
@@ -46,7 +46,7 @@
           "node-1772154783764"
         ],
         "PartitionKeys": [],
-        "Path": "{ifjk001-deploy-test.output_path}",
+        "Path": "{ifjk001.output_path}",
         "Compression": "none",
         "NumberTargetPartitions": "1",
         "Format": "csv",
@@ -107,8 +107,8 @@
       "DirectJDBCSource": {
         "Name": "PostgreSQL",
         "Database": "postgres",
-        "Table": "{ifjk001-deploy-test.table_name}",
-        "ConnectionName": "{ifjk001-deploy-test.jdbc_connection}",
+        "Table": "{ifjk001.table_name}",
+        "ConnectionName": "{ifjk001.jdbc_connection}",
         "ConnectionType": "postgresql",
         "RedshiftTmpDir": "",
         "OutputSchemas": [
