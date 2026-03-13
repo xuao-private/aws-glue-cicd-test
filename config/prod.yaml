@@ -10,7 +10,11 @@ github:
   connection_arn: "arn:aws:codeconnections:ap-northeast-1:288378107057:connection/92d6be0e-c606-4b63-a879-edf3f90e0d65"
 
 jobs:
-  deploy-test:
-    input_path: "s3://xuao-s3-test2/prod/"
+  ifjk001-deploy-test:
+    output_path: "s3://xuao-s3-test2/prod/"
     table_name: "member_prod"
     glue_role: "arn:aws:iam::288378107057:role/service-role/AmazonSageMakerAdminIAMExecutionRole"
+    jdbc_connection: "Jdbc connection"
+  ifjk002-deploy-test2:
+    input_path: "s3://xuao-s3-test1/from/member.csv"
+    glue_role: "arn:aws:iam::288378107057:role/service-role/AmazonSageMakerAdminIAMExecutionRole_1"

@@ -1,0 +1,97 @@
+{
+  "Name": "ifjk002-deploy-test2",
+  "JobMode": "VISUAL",
+  "JobRunQueuingEnabled": false,
+  "Description": "",
+  "Role": "arn:aws:iam::288378107057:role/service-role/AmazonSageMakerAdminIAMExecutionRole_1",
+  "CreatedOn": "2026-03-02 16:30:56.418000+08:00",
+  "LastModifiedOn": "2026-03-12 18:04:52.572000+08:00",
+  "ExecutionProperty": {
+    "MaxConcurrentRuns": 1
+  },
+  "Command": {
+    "Name": "glueetl",
+    "ScriptLocation": "{assets_path}/scripts/ifjk002-deploy-test2.py",
+    "PythonVersion": "3"
+  },
+  "DefaultArguments": {
+    "--enable-metrics": "true",
+    "--enable-spark-ui": "true",
+    "--spark-event-logs-path": "{assets_path}/sparkHistoryLogs/",
+    "--enable-job-insights": "true",
+    "--enable-observability-metrics": "true",
+    "--conf": "spark.eventLog.rolling.enabled=true",
+    "--enable-glue-datacatalog": "true",
+    "--input_path": "s3://xuao-s3-test1/from/member.csv",
+    "--job-bookmark-option": "job-bookmark-disable",
+    "--job-language": "python",
+    "--TempDir": "{assets_path}/temporary/",
+    "--output_path": "s3://xuao-s3-test1/to/"
+  },
+  "MaxRetries": 0,
+  "AllocatedCapacity": 2,
+  "Timeout": 480,
+  "MaxCapacity": 2,
+  "WorkerType": "G.1X",
+  "NumberOfWorkers": 2,
+  "GlueVersion": "5.0",
+  "CodeGenConfigurationNodes": {
+    "node-1772434627348": {
+      "S3CsvSource": {
+        "Name": "froms3",
+        "Paths": [
+          "{ifjk002-deploy-test2.input_path}"
+        ],
+        "Exclusions": [],
+        "Recurse": true,
+        "AdditionalOptions": {
+          "EnableSamplePath": false,
+          "SamplePath": "{ifjk002-deploy-test2.input_path}"
+        },
+        "Separator": "comma",
+        "Escaper": "",
+        "QuoteChar": "disabled",
+        "WithHeader": true,
+        "OptimizePerformance": false,
+        "OutputSchemas": [
+          {
+            "Columns": [
+              {
+                "Name": "member_id",
+                "Type": "string"
+              },
+              {
+                "Name": "first_name",
+                "Type": "string"
+              },
+              {
+                "Name": "last_name",
+                "Type": "string"
+              },
+              {
+                "Name": "mail",
+                "Type": "string"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "node-1772515695095": {
+      "CustomCode": {
+        "Name": "checkFileExist",
+        "Inputs": [
+          "node-1772434627348"
+        ],
+        "Code": "from awsglue.dynamicframe import DynamicFrame\nimport boto3\nfrom botocore.exceptions import ClientError\nfrom awsglue.utils import getResolvedOptions\nimport sys\nimport os\n\nlogger = glueContext.get_logger()\ninput_dyf = list(dfc.values())[0] if dfc else None\nlogger.info(\"CSVファイル存在チェックを開始しました\")\n# 入力パスを取得\nargs = getResolvedOptions(sys.argv, ['input_path'])\ns3_path = args['input_path']\nlogger.info(f\"s3_path: {s3_path}\")\n\n# S3パスを解析\npath_parts = s3_path.replace('s3://', '').split('/', 1)\nbucket, key = path_parts[0], path_parts[1]\n\n# ファイルをチェック\ns3_client = boto3.client('s3')\ntry:\n    s3_client.head_object(Bucket=bucket, Key=key)\n    logger.info(f\"ファイルが存在します: {s3_path}\")\n    \n    # ファイルが存在する場合、元のデータを返す\n    return DynamicFrameCollection({\"output\": input_dyf}, glueContext) if input_dyf else None\n    \nexcept ClientError as e:\n    if e.response['Error']['Code'] == '404':\n        logger.error(f\"ファイルが存在しません: {s3_path}\")\n        raise e\n    else:\n        logger.error(f\"ファイルチェックエラー: {str(e)}\")\n        raise e",
+        "ClassName": "checkFileExist",
+        "OutputSchemas": [
+          {
+            "Columns": []
+          }
+        ]
+      }
+    }
+  },
+  "ExecutionClass": "STANDARD"
+}

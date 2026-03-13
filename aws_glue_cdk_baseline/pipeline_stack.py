@@ -66,7 +66,7 @@ class PipelineStack(Stack):
                 "python $(pwd)/aws_glue_cdk_baseline/job_scripts/generate_mapping.py",
                 "python $(pwd)/aws_glue_cdk_baseline/job_scripts/sync.py "
                    f"--dst-region {config['pipelineAccount']['awsRegion']} "
-                   "--deserialize-from-file aws_glue_cdk_baseline/resources/resources.json "
+                   "--deserialize-from-file resources/ "
                    "--config-path mapping.json "
                    "--targets job "
                    "--skip-prompt"

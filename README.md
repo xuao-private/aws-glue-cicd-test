@@ -111,3 +111,12 @@ TARGET_ENV: ターゲット環境（dev/stg/prod）
 cdk destroy --profile dev-account -c envType=dev
 cdk destroy --profile dev-account -c envType=stg
 cdk destroy --profile prod-account -c envType=prod
+
+## ジョブのjsonを取得
+python aws_glue_cdk_baseline\job_scripts\sync.py `
+  --src-profile pipeline-account `
+  --src-region ap-northeast-1 `
+  --src-job-names "test-job" `
+  --serialize-to-file resources\resources.json `
+  --targets job `
+  --skip-prompt

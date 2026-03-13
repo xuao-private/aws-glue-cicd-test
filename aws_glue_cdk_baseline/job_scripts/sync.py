@@ -12,6 +12,7 @@ import tempfile
 import os
 import sys
 import logging
+import glob
 
 # Configure credentials and required parameters
 parser = argparse.ArgumentParser()
@@ -61,8 +62,8 @@ parser.add_argument('--overwrite-tables', dest='overwrite_tables', type=strtoboo
                     help='Overwrite Glue tables when the tables already exist. (possible values: [true, false]. default: true)')
 parser.add_argument('--overwrite-connections', dest='overwrite_connections', type=strtobool, default=True,
                     help='Overwrite Glue connections when the connections already exist. (possible values: [true, false]. default: true)')
-parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool, default=True,
-                    help='Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: true)')
+parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool, default=False,
+                    help='Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: false)')
 parser.add_argument('--config-path', dest='config_path', type=str,
                     help='The config file path to provide parameter mapping. You can set S3 path or local file path.')
 parser.add_argument('--serialize-to-file', dest='serialize_file', type=str,
@@ -297,7 +298,8 @@ def copy_job_script(src_s3path, dst_s3path):
 
 def get_job_names():
     if args.deserialize_file:
-        return [job['Name'] for job in resources.get('jobs', [])]
+        # すべての辞書のキー（ジョブ名）を返す
+        return list(resources.keys())
     else:
         if args.src_job_names:
             return args.src_job_names.split(',')
@@ -311,8 +313,8 @@ def get_job_names():
 
 def get_job_definition(job_name):
     if args.deserialize_file:
-        job_definitions = {job['Name']: job for job in resources.get('jobs', [])}
-        job = job_definitions.get(job_name)
+        # 辞書から直接ジョブ定義を取得
+        job = resources.get(job_name)
         if not job:
             logger.error(f"Job '{job_name}' not found in deserialized data.")
         return job
@@ -377,7 +379,8 @@ def synchronize_job(job_name, mapping, job):
         current_job = dst_glue.get_job(JobName=job_name)
         logger.debug(f"Current job '{job_name}' configuration: {current_job}")
         if args.overwrite_jobs:
-            del job['Name']
+            if 'Name' in job:
+                del job['Name']
             job_update = {}
             job_update['JobName'] = job_name
             job_update['JobUpdate'] = job
@@ -873,11 +876,22 @@ def main():
 
     # Handle deserialization
     if args.deserialize_file:
-        # Read resources from the file
-        with open(args.deserialize_file, 'r') as f:
-            resources = json.load(f)
-        logger.info(f"Resources deserialized from file {args.deserialize_file}")
-
+        # ディレクトリかファイルかを判定
+        if os.path.isdir(args.deserialize_file):
+            # ディレクトリモード：すべての JSON ファイルを読み込む
+            resources = {}
+            for job_file in glob.glob(f'{args.deserialize_file}/*.json'):
+                with open(job_file, 'r') as f:
+                    job = json.load(f)
+                    if 'Name' in job:
+                        resources[job['Name']] = job
+                        logger.info(f"Loaded job: {job['Name']} from {job_file}")
+            logger.info(f"Resources deserialized from directory {args.deserialize_file}")
+        else:
+            # 従来モード：単一ファイル
+            with open(args.deserialize_file, 'r') as f:
+                resources = json.load(f)
+            logger.info(f"Resources deserialized from file {args.deserialize_file}")
     # Proceed with synchronization
     if "job" in args.targets:
         job_names = get_job_names()

@@ -14,7 +14,11 @@ github:
 
 # 作业配置
 jobs:
-  deploy-test:
-    input_path: "s3://xuao-s3-test2/dev/"
-    table_name: "member_dev"
-    glue_role: "arn:aws:iam::961341542235:role/service-role/AWSGlueServiceRole-dev"
+  ifjk001-deploy-test:
+    output_path: "s3://aws-glue-test-bucket-byxudl/to/dev/ifjk001-deploy-test/"
+    table_name: "members_glue_test"
+    glue_role: "arn:aws:iam::961341542235:role/Glue-Test-Role"
+    jdbc_connection: "dev jdbc connection by xudl"
+  ifjk002-deploy-test2:
+    input_path: "s3://aws-glue-test-bucket-byxudl/from/member111.csv"
+    glue_role: "arn:aws:iam::961341542235:role/Glue-Test-Role"
