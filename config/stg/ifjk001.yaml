@@ -1,0 +1,5 @@
+ifjk001:
+  output_path: "s3://aws-glue-test-bucket-byxudl/to/stg/ifjk001-deploy-test/"
+  table_name: "members_glue_test"
+  glue_role: "arn:aws:iam::961341542235:role/Glue-Test-Role"
+  jdbc_connection: "dev jdbc connection by xudl"

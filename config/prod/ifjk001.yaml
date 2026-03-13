@@ -1,0 +1,5 @@
+ifjk001:
+  output_path: "s3://xuao-s3-test2/prod/"
+  table_name: "member_prod"
+  glue_role: "arn:aws:iam::288378107057:role/service-role/AmazonSageMakerAdminIAMExecutionRole"
+  jdbc_connection: "Jdbc connection"

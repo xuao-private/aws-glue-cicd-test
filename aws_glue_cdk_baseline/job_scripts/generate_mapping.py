@@ -1,37 +1,44 @@
 import yaml
 import json
 import os
+import glob
 
 def generate_mapping():
     # 環境変数からターゲット環境を取得
     target_env = os.environ.get('TARGET_ENV', 'prod')
     
-    # 対象環境の設定ファイルを読み込み
-    config_file = f"./config/{target_env}.yaml"
-    
-    with open(config_file, 'r') as f:
-        config = yaml.safe_load(f)
-    
     mapping = {}
     
-    # すべての設定項目をループ
-    for key, value in config.items():
-        if isinstance(value, str):
-            mapping[f"{{{key}}}"] = value
-            print(f"Env mapping: {{{key}}} → {value}")
-        elif isinstance(value, dict) and key == 'jobs':
-            # jobs 内の設定を処理
-            for job_name, job_config in value.items():
-                for job_key, job_value in job_config.items():
-                    if isinstance(job_value, str):
-                        placeholder = f"{{{job_name}.{job_key}}}"
-                        mapping[placeholder] = job_value
-                        print(f"Job mapping: {placeholder} → {job_value}")
+    # 1. 共通設定を読み込む
+    common_file = f"./config/{target_env}/common.yaml"
+    if os.path.exists(common_file):
+        with open(common_file, 'r') as f:
+            common = yaml.safe_load(f)
+            for key, value in common.items():
+                if isinstance(value, str):
+                    mapping[f"{{{key}}}"] = value
+                    print(f"Common mapping: {{{key}}} → {value}")
     
+    # 2. 各ジョブの設定ファイルを読み込む（common.yaml 以外）
+    for job_file in glob.glob(f"./config/{target_env}/*.yaml"):
+        if job_file.endswith('common.yaml'):
+            continue
+        
+        with open(job_file, 'r') as f:
+            job_config = yaml.safe_load(f)
+            # job_config は { job_name: { ... } } の形式
+            for job_name, config in job_config.items():
+                for key, value in config.items():
+                    if isinstance(value, str):
+                        placeholder = f"{{{job_name}.{key}}}"
+                        mapping[placeholder] = value
+                        print(f"Job mapping: {placeholder} → {value}")
+    
+    # 3. mapping.json を保存
     with open('mapping.json', 'w') as f:
         json.dump(mapping, f, indent=2)
     
-    print(f"\nMapping generated for {target_env}")
+    print(f"\n Mapping generated for {target_env}")
     print(f"   Total mappings: {len(mapping)}")
 
 if __name__ == "__main__":
