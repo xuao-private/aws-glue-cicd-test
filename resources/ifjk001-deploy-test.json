@@ -65,7 +65,7 @@
         "Inputs": [
           "node-1772154783764"
         ],
-        "Code": "# test112311\ndynamic_frame = dfc[\"PostgreSQL_node1772154783764\"]\n\n# To Spark DataFrame\ndf = dynamic_frame.toDF()\n\n# test222\nif df.count() >= 1:\n    (\n        df.coalesce(1)\n          .write\n          .option(\"header\", \"false\")   # test333\n          .option(\"quote\", '\"')        # test4444\n          .mode(\"overwrite\")\n          .csv(\"s3://aws-glue-test-bucket-byxudl/to/dev/\")\n    )\n\n# test5555\nreturn DynamicFrameCollection({\"dynamic_frame_out\": DynamicFrame.fromDF(df, glueContext, \"dynamic_frame_out\")}, glueContext)",
+        "Code": "# test112311\ndynamic_frame = dfc[\"PostgreSQL_node1772154783764\"]\n\n# To Spark DataFrame\ndf = dynamic_frame.toDF()\n\n# test222\nif df.count() >= 1:\n    (\n        df.coalesce(1)\n          .write\n          .option(\"header\", \"false\")   # test333\n          .option(\"quote\", '\"')        # test4444\n          .mode(\"overwrite\")\n          .csv(\"s3://aws-glue-test-bucket-byxudl/to/dev/custom_transform/\")\n    )\n\n# test5555\nreturn DynamicFrameCollection({\"dynamic_frame_out\": DynamicFrame.fromDF(df, glueContext, \"dynamic_frame_out\")}, glueContext)",
         "ClassName": "MyTransform",
         "OutputSchemas": [
           {

@@ -20,5 +20,6 @@ jobs:
     glue_role: "arn:aws:iam::961341542235:role/Glue-Test-Role"
     jdbc_connection: "dev jdbc connection by xudl"
   ifjk002-deploy-test2:
-    input_path: "s3://aws-glue-test-bucket-byxudl/from/member111.csv"
+    input_path: "s3://aws-glue-test-bucket-byxudl/from/member_csv_utf8.csv"
+    check_path: "s3://aws-glue-test-bucket-byxudl/from/member_csv_xxxx.csv"
     glue_role: "arn:aws:iam::961341542235:role/Glue-Test-Role"

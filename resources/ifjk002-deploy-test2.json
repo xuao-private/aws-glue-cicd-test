@@ -22,11 +22,10 @@
     "--enable-observability-metrics": "true",
     "--conf": "spark.eventLog.rolling.enabled=true",
     "--enable-glue-datacatalog": "true",
-    "--input_path": "s3://xuao-s3-test1/from/member.csv",
+    "--input_path": "{ifjk002-deploy-test2.check_path}",
     "--job-bookmark-option": "job-bookmark-disable",
     "--job-language": "python",
-    "--TempDir": "{assets_path}/temporary/",
-    "--output_path": "s3://xuao-s3-test1/to/"
+    "--TempDir": "{assets_path}/temporary/"
   },
   "MaxRetries": 0,
   "AllocatedCapacity": 2,
