@@ -80,7 +80,8 @@ class PipelineStack(Stack):
                     actions=[
                         "s3:PutObject",
                         "s3:GetObject",
-                        "s3:ListBucket"
+                        "s3:ListBucket",
+                        "s3:HeadBucket"
                     ],
                     resources=[
                         f"arn:aws:s3:::{bucket_name}",
