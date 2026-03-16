@@ -48,15 +48,6 @@ def publish_transforms():
     
     s3 = boto3.client('s3')
     
-    # バケットが存在するか確認
-    try:
-        s3.head_bucket(Bucket=bucket)
-        print(f"バケットが存在します: {bucket}")
-    except Exception as e:
-        print(f"バケットが存在しないか、アクセス権限がありません: {bucket}")
-        print(f"エラー: {e}")
-        raise e  # 失敗時に例外を投げて終了
-    
     # 全てのノードディレクトリを探索
     transform_dirs = glob.glob('glue_common_transforms/*/')
     
