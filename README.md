@@ -101,8 +101,6 @@ cdk deploy --profile dev-account -c envType=stg
 cdk deploy --profile prod-account -c envType=prod
 
 ## 環境変数
-JOB_NAME_PREFIX: ジョブ名プレフィックス（例：dev-）
-
 TARGET_ENV: ターゲット環境（dev/stg/prod）
 
 ## リソースの削除

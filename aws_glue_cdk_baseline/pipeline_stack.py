@@ -94,7 +94,6 @@ class PipelineStack(Stack):
         sync_step = CodeBuildStep(f"{env_type.capitalize()}GlueJobSync",
             input=source,
             env={
-                "JOB_NAME_PREFIX": f"{env_type}-",
                 "TARGET_ENV": env_type
             },
             commands=[

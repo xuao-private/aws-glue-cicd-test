@@ -328,10 +328,12 @@ def synchronize_job(job_name, mapping, job):
     logger.debug(f"Synchronizing job '{job_name}'")
 
     # 環境変数からプレフィックスを取得
-    job_name_prefix = os.environ.get('JOB_NAME_PREFIX', '')
-    if job_name_prefix:
-        new_job_name = f"{job_name_prefix}{job_name}"
-        logger.info(f"Adding prefix '{job_name_prefix}' to job name: {job_name} -> {new_job_name}")
+    target_env = os.environ.get('TARGET_ENV', '')
+    if target_env:
+        # 作業名には連字符を追加
+        hyphen_prefix = f"{target_env}-"
+        new_job_name = f"{hyphen_prefix}{job_name}"
+        logger.info(f"Adding prefix '{hyphen_prefix}' to job name: {job_name} -> {new_job_name}")
         job_name = new_job_name
         if 'Name' in job:
             job['Name'] = new_job_name
@@ -339,11 +341,12 @@ def synchronize_job(job_name, mapping, job):
         if 'Command' in job and 'ScriptLocation' in job['Command']:
             old_script = job['Command']['ScriptLocation']
             # パス内に環境プレフィックスを挿入
-            new_script = old_script.replace('/scripts/', f'/scripts/{job_name_prefix}')
+            new_script = old_script.replace('/scripts/', f'/scripts/{hyphen_prefix}')
             job['Command']['ScriptLocation'] = new_script
             logger.info(f"Script location updated: {old_script} -> {new_script}")
 
-    add_prefix_to_transform_paths(job, job_name_prefix)
+    transform_hyphen_prefix = f"{target_env}_"
+    add_prefix_to_transform_paths(job, transform_hyphen_prefix)
 
     # Skip jobs which do not have DAG
     if args.skip_no_dag_jobs and 'CodeGenConfigurationNodes' not in job:
@@ -412,10 +415,10 @@ def add_prefix_to_transform_paths(obj, prefix):
         # 1. DynamicTransform.Path を処理
         if 'DynamicTransform' in obj and 'Path' in obj['DynamicTransform']:
             old_path = obj['DynamicTransform']['Path']
-            if '/transforms/' in old_path and not old_path.startswith(f"/transforms/{prefix}_"):
+            if '/transforms/' in old_path and not old_path.startswith(f"/transforms/{prefix}"):
                 obj['DynamicTransform']['Path'] = old_path.replace(
                     '/transforms/', 
-                    f'/transforms/{prefix}_'
+                    f'/transforms/{prefix}'
                 )
                 print(f"  Transform path を更新しました: {old_path} -> {obj['DynamicTransform']['Path']}")
         
@@ -430,8 +433,8 @@ def add_prefix_to_transform_paths(obj, prefix):
             for file_path in files:
                 file_path = file_path.strip()
                 # /transforms/ を含むパスのみ置換、既にプレフィックスが付いている場合はスキップ
-                if '/transforms/' in file_path and f"/transforms/{prefix}_" not in file_path:
-                    new_path = file_path.replace('/transforms/', f'/transforms/{prefix}_')
+                if '/transforms/' in file_path and f"/transforms/{prefix}" not in file_path:
+                    new_path = file_path.replace('/transforms/', f'/transforms/{prefix}')
                     new_files.append(new_path)
                     print(f"    Transform ファイルを更新しました: {file_path} -> {new_path}")
                 else:
