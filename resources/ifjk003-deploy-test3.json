@@ -37,7 +37,7 @@
   "CodeGenConfigurationNodes": {
     "node-1773388851469": {
       "DynamicTransform": {
-        "Name": "ファイル存在チェック",
+        "Name": "ファイル存在チェック-deploy",
         "TransformName": "check_file_exist",
         "Inputs": [
           "node-1772434627348"
