@@ -6,7 +6,7 @@ import yaml
 from pathlib import Path
 
 def publish_transforms():
-    """カスタムノード公開スクリプト"""
+    """カスタムノード公開スクリプト - 環境プレフィックス自動追加"""
     
     print("カスタムノードの公開を開始します...")
     
@@ -37,10 +37,8 @@ def publish_transforms():
     # assets_path からバケット名を取得
     assets_path = common_config.get('assets_path', '')
     if assets_path.startswith('s3://'):
-        # s3://aws-glue-assets-deploy-test-dev 形式からバケット名を抽出
         bucket = assets_path[5:].split('/')[0]
     else:
-        # assets_path がない場合、デフォルトの命名規則を使用
         bucket = f"aws-glue-assets-{account_id}-{region}"
     
     print(f"ターゲット環境: {target_env}")
@@ -57,7 +55,7 @@ def publish_transforms():
     except Exception as e:
         print(f"バケットが存在しないか、アクセス権限がありません: {bucket}")
         print(f"エラー: {e}")
-        return
+        raise e  # 失敗時に例外を投げて終了
     
     # 全てのノードディレクトリを探索
     transform_dirs = glob.glob('glue_common_transforms/*/')
@@ -66,7 +64,7 @@ def publish_transforms():
         print("カスタムノードが見つかりません")
         return
     
-    uploaded_count = 0
+    total_uploaded = 0
     
     for transform_dir in transform_dirs:
         transform_dir = Path(transform_dir)
@@ -74,39 +72,41 @@ def publish_transforms():
         
         print(f"\nノードを処理中: {transform_name}")
         
-        # JSON ファイルを探す
         json_files = list(transform_dir.glob('*.json'))
-        if not json_files:
-            print("  JSON 定義ファイルが見つかりません")
-            continue
-        
-        # Python ファイルを探す
         py_files = list(transform_dir.glob('*.py'))
-        if not py_files:
-            print("  Python コードファイルが見つかりません")
-            continue
         
-        # JSON ファイルをアップロード - transforms/ 直下にアップロード
+        node_uploaded = 0
+        node_failed = 0
+        
+        # JSON ファイルアップロード
         for json_file in json_files:
-            s3_key = f"transforms/{json_file.name}"
+            new_filename = f"{target_env}_{json_file.name}"
+            s3_key = f"transforms/{new_filename}"
             try:
                 s3.upload_file(str(json_file), bucket, s3_key)
-                print(f"  アップロード成功: {json_file.name} → s3://{bucket}/{s3_key}")
-                uploaded_count += 1
+                node_uploaded += 1
             except Exception as e:
-                print(f"  アップロード失敗: {json_file.name} - {e}")
+                print(f"JSON ファイルアップロード失敗: {json_file.name} - {e}")
+                node_failed += 1
+                raise e  # 失敗時に終了
         
-        # Python ファイルをアップロード - transforms/ 直下にアップロード
+        # Python ファイルアップロード
         for py_file in py_files:
-            s3_key = f"transforms/{py_file.name}"
+            new_filename = f"{target_env}_{py_file.name}"
+            s3_key = f"transforms/{new_filename}"
             try:
                 s3.upload_file(str(py_file), bucket, s3_key)
-                print(f"  アップロード成功: {py_file.name} → s3://{bucket}/{s3_key}")
-                uploaded_count += 1
+                node_uploaded += 1
             except Exception as e:
-                print(f"  アップロード失敗: {py_file.name} - {e}")
+                print(f"Python ファイルアップロード失敗: {py_file.name} - {e}")
+                node_failed += 1
+                raise e  # 失敗時に終了
+        
+        print(f"ノード '{transform_name}' のアップロード結果: 成功 {node_uploaded} 件, 失敗 {node_failed} 件")
+        total_uploaded += node_uploaded
     
-    print(f"\nカスタムノードの公開が完了しました。合計 {uploaded_count} ファイルをアップロードしました")
+    print(f"\nカスタムノードの公開が完了しました。合計 {total_uploaded} ファイルをアップロードしました")
+    print(f"環境プレフィックス '{target_env}_' が自動的に追加されました")
 
 if __name__ == "__main__":
     publish_transforms()

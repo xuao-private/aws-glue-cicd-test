@@ -343,6 +343,8 @@ def synchronize_job(job_name, mapping, job):
             job['Command']['ScriptLocation'] = new_script
             logger.info(f"Script location updated: {old_script} -> {new_script}")
 
+    add_prefix_to_transform_paths(job, job_name_prefix)
+
     # Skip jobs which do not have DAG
     if args.skip_no_dag_jobs and 'CodeGenConfigurationNodes' not in job:
         logger.debug(f"Skipping job '{job_name}' because the parameter '--skip-no-dag-jobs' is true and this job does not have DAG.")
@@ -400,6 +402,53 @@ def synchronize_job(job_name, mapping, job):
         else:
             raise
 
+
+def add_prefix_to_transform_paths(obj, prefix):
+    """
+    再帰的にすべての DynamicTransform の Path と extra-py-files に環境プレフィックスを追加
+    （重複プレフィックスを防止）
+    """
+    if isinstance(obj, dict):
+        # 1. DynamicTransform.Path を処理
+        if 'DynamicTransform' in obj and 'Path' in obj['DynamicTransform']:
+            old_path = obj['DynamicTransform']['Path']
+            if '/transforms/' in old_path and not old_path.startswith(f"/transforms/{prefix}_"):
+                obj['DynamicTransform']['Path'] = old_path.replace(
+                    '/transforms/', 
+                    f'/transforms/{prefix}_'
+                )
+                print(f"  Transform path を更新しました: {old_path} -> {obj['DynamicTransform']['Path']}")
+        
+        # 2. extra-py-files を処理（複数ファイル対応、transforms パスのみ置換）
+        if 'DefaultArguments' in obj and '--extra-py-files' in obj['DefaultArguments']:
+            old_extra = obj['DefaultArguments']['--extra-py-files']
+            
+            # カンマで区切られた複数ファイル
+            files = old_extra.split(',')
+            new_files = []
+            
+            for file_path in files:
+                file_path = file_path.strip()
+                # /transforms/ を含むパスのみ置換、既にプレフィックスが付いている場合はスキップ
+                if '/transforms/' in file_path and f"/transforms/{prefix}_" not in file_path:
+                    new_path = file_path.replace('/transforms/', f'/transforms/{prefix}_')
+                    new_files.append(new_path)
+                    print(f"    Transform ファイルを更新しました: {file_path} -> {new_path}")
+                else:
+                    # transforms パス以外、または既にプレフィックス付きはそのまま
+                    new_files.append(file_path)
+                    print(f"    他のファイルは保持: {file_path}")
+            
+            obj['DefaultArguments']['--extra-py-files'] = ','.join(new_files)
+            print(f"  extra-py-files を最終更新: {old_extra} -> {obj['DefaultArguments']['--extra-py-files']}")
+        
+        # 3. 全ての子要素を再帰的に処理
+        for key, value in obj.items():
+            add_prefix_to_transform_paths(value, prefix)
+    
+    elif isinstance(obj, list):
+        for item in obj:
+            add_prefix_to_transform_paths(item, prefix)
 
 def organize_partition_param(database_name, table_name, partition_argument, mapping):
     """Function to organize a partition argument parameters to prepare for batch_create_partition API.
