@@ -133,7 +133,8 @@ class PipelineStack(Stack):
                         "s3:GetObject",
                         "s3:PutObject",
                         "s3:ListBucket",
-                        "s3:GetBucketLocation"
+                        "s3:GetBucketLocation",
+                        "s3:HeadBucket"
                     ],
                     resources=["*"]
                 )
