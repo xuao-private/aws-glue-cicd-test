@@ -114,7 +114,7 @@ cdk destroy --profile prod-account -c envType=prod
 python aws_glue_cdk_baseline\job_scripts\sync.py `
   --src-profile dev-account `
   --src-region ap-northeast-1 `
-  --src-job-names "test-job" `
+  --src-job-names "ifjk002-deploy-test2" `
   --serialize-to-file resources\resources.json `
   --targets job `
   --skip-prompt

@@ -1,0 +1,38 @@
+{
+    "name": "email_notifier",
+    "displayName": "メール通知-deploy",
+    "description": "Glueジョブ完了時にメールを送信します",
+    "functionName": "email_notifier",
+    "parameters": [
+        {
+            "name": "source_email",
+            "displayName": "送信元メールアドレス",
+            "type": "str",
+            "description": "SESで検証済みの送信元アドレス",
+            "placeholder": "sender@example.com",
+            "isOptional": false
+        },
+        {
+            "name": "destination_emails",
+            "displayName": "送信先メールアドレス",
+            "type": "str",
+            "description": "JSON形式のメールアドレスリスト",
+            "placeholder": "[\"user1@example.com\", \"user2@example.com\"]",
+            "isOptional": false
+        }
+    ],
+    "inputs": [
+        {
+            "name": "input",
+            "displayName": "入力データ",
+            "description": "メール送信後も処理を続ける場合のデータ"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "output",
+            "displayName": "出力データ",
+            "description": "入力と同じデータ"
+        }
+    ]
+}

@@ -1,0 +1,4 @@
+ifjk003:
+  input_path: "s3://xuao-s3-test1/from/member.csv"
+  check_path: "s3://xuao-s3-test1/from/member_csv_xxxx.csv"
+  glue_role: "arn:aws:iam::288378107057:role/service-role/AmazonSageMakerAdminIAMExecutionRole_1"

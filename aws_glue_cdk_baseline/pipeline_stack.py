@@ -13,7 +13,7 @@ class PipelineStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, config: Dict, env_type: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         
-        print(f"{env_type} 環境の Pipeline をデプロイ")
+        print(f"{env_type} 環境のパイプラインをデプロイします")
         
         # config から GitHub 設定を取得
         GITHUB_REPO = config['github']['repo']
@@ -27,7 +27,7 @@ class PipelineStack(Stack):
             GITHUB_REPO,
             GITHUB_BRANCH,
             connection_arn=GITHUB_CONNECTION_ARN,
-            trigger_on_push=False  # push時の自動トリガーを無効化
+            trigger_on_push=False  # push 時の自動トリガーを無効化
         )
  
         pipeline = CodePipeline(self, "GluePipeline",
@@ -56,7 +56,41 @@ class PipelineStack(Stack):
             )
         )
         
-        # ジョブ同期ステップ（直接 pipeline に追加）
+        # assets_path からバケット名を取得
+        assets_path = config.get('assets_path', '')
+        if assets_path.startswith('s3://'):
+            bucket_name = assets_path[5:].split('/')[0]
+        else:
+            account_id = config['pipelineAccount']['awsAccountId']
+            region = config['pipelineAccount']['awsRegion']
+            bucket_name = f"aws-glue-assets-{account_id}-{region}"
+        
+        # カスタムノード公開ステップ
+        publish_transforms_step = CodeBuildStep("PublishTransforms",
+            input=source,
+            env={
+                "TARGET_ENV": env_type  # 環境変数を渡す
+            },
+            commands=[
+                "pip install boto3",  # boto3 のみインストール（pyyaml は requirements.txt に含む）
+                "python $(pwd)/aws_glue_cdk_baseline/job_scripts/publish_transforms.py"
+            ],
+            role_policy_statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "s3:PutObject",
+                        "s3:GetObject",
+                        "s3:ListBucket"
+                    ],
+                    resources=[
+                        f"arn:aws:s3:::{bucket_name}",
+                        f"arn:aws:s3:::{bucket_name}/*"
+                    ]
+                )
+            ]
+        )
+        
+        # ジョブ同期ステップ
         sync_step = CodeBuildStep(f"{env_type.capitalize()}GlueJobSync",
             input=source,
             env={
@@ -106,5 +140,6 @@ class PipelineStack(Stack):
             ]
         )
         
-        # Wave を追加して同期ステップを実行
+        # 先にカスタムノードを公開し、その後ジョブを同期
+        pipeline.add_wave("Prep").add_post(publish_transforms_step)
         pipeline.add_wave("GlueJobSync").add_post(sync_step)

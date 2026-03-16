@@ -1,0 +1,125 @@
+{
+  "Name": "ifjk003-deploy-test3",
+  "JobMode": "VISUAL",
+  "JobRunQueuingEnabled": false,
+  "Description": "",
+  "Role": "{ifjk003.glue_role}",
+  "CreatedOn": "2026-03-13 16:01:09.926000+08:00",
+  "LastModifiedOn": "2026-03-13 16:01:09.926000+08:00",
+  "ExecutionProperty": {
+    "MaxConcurrentRuns": 1
+  },
+  "Command": {
+    "Name": "glueetl",
+    "ScriptLocation": "{assets_path}/scripts/ifjk003-deploy-test3.py",
+    "PythonVersion": "3"
+  },
+  "DefaultArguments": {
+    "--enable-metrics": "true",
+    "--enable-spark-ui": "true",
+    "--extra-py-files": "{assets_path}/transforms/jk_check_file_exist.py",
+    "--spark-event-logs-path": "{assets_path}/sparkHistoryLogs/",
+    "--enable-job-insights": "true",
+    "--enable-observability-metrics": "true",
+    "--conf": "spark.eventLog.rolling.enabled=true",
+    "--enable-glue-datacatalog": "true",
+    "--job-bookmark-option": "job-bookmark-disable",
+    "--job-language": "python",
+    "--TempDir": "{assets_path}/temporary/"
+  },
+  "MaxRetries": 0,
+  "AllocatedCapacity": 2,
+  "Timeout": 480,
+  "MaxCapacity": 2,
+  "WorkerType": "G.1X",
+  "NumberOfWorkers": 2,
+  "GlueVersion": "5.0",
+  "CodeGenConfigurationNodes": {
+    "node-1773388851469": {
+      "DynamicTransform": {
+        "Name": "ファイル存在チェック",
+        "TransformName": "check_file_exist",
+        "Inputs": [
+          "node-1772434627348"
+        ],
+        "Parameters": [
+          {
+            "Name": "input_path",
+            "Type": "str",
+            "Value": [
+              "{ifjk002.check_path}"
+            ],
+            "IsOptional": false
+          }
+        ],
+        "FunctionName": "check_file_exist",
+        "Path": "{assets_path}/transforms/jk_check_file_exist.py",
+        "Version": "1.0.0",
+        "OutputSchemas": [
+          {
+            "Columns": [
+              {
+                "Name": "member_id",
+                "Type": "string"
+              },
+              {
+                "Name": "first_name",
+                "Type": "string"
+              },
+              {
+                "Name": "last_name",
+                "Type": "string"
+              },
+              {
+                "Name": "mail",
+                "Type": "string"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "node-1772434627348": {
+      "S3CsvSource": {
+        "Name": "froms3",
+        "Paths": [
+          "{ifjk002.input_path}"
+        ],
+        "Exclusions": [],
+        "Recurse": true,
+        "AdditionalOptions": {
+          "EnableSamplePath": false,
+          "SamplePath": "{ifjk002.input_path}"
+        },
+        "Separator": "comma",
+        "Escaper": "",
+        "QuoteChar": "disabled",
+        "WithHeader": true,
+        "OptimizePerformance": false,
+        "OutputSchemas": [
+          {
+            "Columns": [
+              {
+                "Name": "member_id",
+                "Type": "string"
+              },
+              {
+                "Name": "first_name",
+                "Type": "string"
+              },
+              {
+                "Name": "last_name",
+                "Type": "string"
+              },
+              {
+                "Name": "mail",
+                "Type": "string"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "ExecutionClass": "STANDARD"
+}

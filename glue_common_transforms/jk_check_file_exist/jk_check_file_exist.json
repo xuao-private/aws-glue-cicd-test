@@ -1,0 +1,32 @@
+{
+    "name": "check_file_exist",
+    "displayName": "ファイル存在チェック-deploy",
+    "description": "指定されたS3パスのファイルが存在するかチェックします。存在しない場合はエラーになります。",
+    "functionName": "check_file_exist",
+    "parameters": [
+        {
+            "name": "input_path",
+            "displayName": "S3ファイルパス",
+            "type": "str",
+            "description": "チェックするS3ファイルのパスを入力してください（例: s3://バケット名/パス/ファイル.csv）",
+            "placeholder": "s3://your-bucket/path/to/file.csv",
+            "isOptional": false,
+            "validationRule": "^s3://.*$",
+            "validationMessage": "有効なS3パスを入力してください（s3://で始まる必要があります）"
+        }
+    ],
+    "inputs": [
+        {
+            "name": "input",
+            "displayName": "入力データ",
+            "description": "通過させるDynamicFrameデータ"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "output",
+            "displayName": "出力データ",
+            "description": "チェック通過後の元のデータ"
+        }
+    ]
+}
