@@ -11,3 +11,6 @@ github:
   repo: "xuao-private/aws-glue-cicd-test"
   branch: "develop"
   connection_arn: "arn:aws:codeconnections:ap-northeast-1:961341542235:connection/78aa1400-8f4b-4aa4-8e0f-4b94b703bc1b"
+
+env: "dev"
+env_desc: "開発環境"

@@ -1,7 +1,7 @@
 {
-    "name": "check_file_exist",
-    "displayName": "ファイル存在チェック",
-    "description": "deploy-指定されたS3パスのファイルが存在するかチェックします。存在しない場合はエラーになります。",
+    "name": "{env}_check_file_exist",
+    "displayName": "[{env_desc}]ファイル存在チェック",
+    "description": "[{env_desc}]-指定されたS3パスのファイルが存在するかチェックします。存在しない場合はエラーになります。",
     "functionName": "check_file_exist",
     "parameters": [
         {

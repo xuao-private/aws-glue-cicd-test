@@ -1,7 +1,7 @@
 {
-    "name": "email_notifier",
-    "displayName": "メール通知-deploy",
-    "description": "Glueジョブ完了時にメールを送信します",
+    "name": "{env}_email_notifier",
+    "displayName": "[{env_desc}]メール通知",
+    "description": "[{env_desc}]-Glueジョブ完了時にメールを送信します",
     "functionName": "email_notifier",
     "parameters": [
         {
